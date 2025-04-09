@@ -1,0 +1,95 @@
+
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
+const CodeQuestDemo = () => {
+  const [output, setOutput] = useState("");
+  const [input, setInput] = useState("你好");
+
+  const runCode = () => {
+    const normalized = input.trim();
+
+    if (/(.+)/.test(normalized)) {
+      const message = normalized.match(/(.+)/)[1].trim();
+      let reply = "";
+
+      switch (message) {
+        case "你好":
+          reply = "幹嘛";
+          break;
+        case "你是誰":
+          reply = "我是代碼魔法師助手！";
+          break;
+        case "再見":
+          reply = "掰掰！祝你好運！";
+          break;
+        case "早安":
+          reply = "這不是你該醒來的時間。";
+          break;
+        case "你會什麼":
+          reply = "我會用程式召喚雷電與貓咪。";
+          break;
+        case "教我魔法":
+          reply = "魔法是責任，不是玩具。";
+          break;
+        case "打開寶箱":
+          reply = "沒密碼你休想。";
+          break;
+        case "密碼是1234":
+          reply = "哼…這麼簡單的密碼？還真是你風格。";
+          break;
+        case "為什麼不能過去":
+          reply = "因為你沒有寫對的邏輯。";
+          break;
+        case "我寫好了":
+          reply = "你確定嗎？那就試試看。";
+          break;
+        case "幫我debug":
+          reply = "你要先面對自己的錯誤。";
+          break;
+        case "給我提示":
+          reply = "提示只能給一次，確定要用嗎？";
+          break;
+        case "現在幾點":
+          reply = "編譯器不告訴我這些凡人的時間。";
+          break;
+        case "你好煩":
+          reply = "啊？你說什麼？我聽不到～";
+          break;
+        case "我愛你":
+          reply = "謝謝，我的心是由 0 和 1 組成的。";
+          break;
+        default:
+          reply = `你說「${message}」，我不知道怎麼回應...`;
+      }
+
+      setOutput(reply);
+    } else {
+      setOutput("請用『我說 XXX』的格式來與我對話。🧙‍♂️");
+    }
+  };
+
+  return (
+    <div className="max-w-xl mx-auto mt-10 space-y-4">
+      <Card>
+        <CardContent className="p-4 space-y-2">
+          <h2 className="text-xl font-bold">🧙‍♂️ 第1關：對話測試</h2>
+          <p className="text-sm text-gray-600">
+            請輸入對話，例如：<code>我說你好</code>
+          </p>
+          <textarea
+            className="w-full p-2 border rounded"
+            rows={3}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+          <Button onClick={runCode}>說話</Button>
+          <div className="mt-4 p-3 bg-gray-100 rounded text-lg">🗣️ 輸出：{output}</div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default CodeQuestDemo;
