@@ -7,36 +7,38 @@
   <style>
     body {
       font-family: "微軟正黑體", sans-serif;
-      background-color: #1f1f2e;
+      background-color: #fff9e6;
       margin: 0;
       padding: 0;
-      color: #fff;
+      color: #4e3b1f;
     }
     .game-container {
       max-width: 700px;
       margin: 50px auto;
-      background: rgba(255, 255, 255, 0.05);
+      background: #fff3c4;
       border-radius: 15px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 0 10px rgba(150, 110, 60, 0.2);
       padding: 30px;
+      border: 2px solid #e0a458;
     }
     h1 {
       text-align: center;
       font-size: 28px;
       margin-bottom: 20px;
-      color: #f9c74f;
+      color: #a25c00;
     }
     .dialogue-box {
-      background: #2a2a3d;
+      background: #fff7da;
       padding: 20px;
       border-radius: 10px;
       font-size: 18px;
       line-height: 1.6;
-      border-left: 5px solid #f94144;
-      animation: fadeIn 0.6s ease-in-out;
+      border-left: 5px solid #d6862f;
+      opacity: 0;
+      animation: fadeIn 0.6s ease-in-out forwards;
     }
     .button {
-      background-color: #577590;
+      background-color: #e6a84b;
       color: white;
       border: none;
       padding: 12px 20px;
@@ -48,11 +50,17 @@
       transition: background-color 0.3s ease;
     }
     .button:hover {
-      background-color: #495867;
+      background-color: #cf8c2e;
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
     }
   </style>
 </head>
@@ -62,7 +70,10 @@
     <h1>平行時空異世界</h1>
     <div id="story" class="dialogue-box">
       歡迎來到文字冒險遊戲！<br>
-      在高中度過「邊緣人」生活的遙，上課時突然跟同班同學一起被召喚到異世界。只要從外掛技能清單中選擇喜歡的技能，神明就會賜予你── 本來應該是這樣的，但外掛技能是先搶先贏，所以強勢技能都已經被同學們拿完了！？<br><br>由於神明惱羞成怒，遙被硬塞了全部剩下的負面技能，還因為技能『邊緣人』的關係，到了異世界也只能孤單一人冒險……。
+      在高中度過「邊緣人」生活的遙，上課時突然跟同班同學一起被召喚到異世界。<br>
+      本來應該可以選擇外掛技能，結果好技能都被搶完了！？<br><br>
+      神明惱羞成怒，把剩下的負面技能全部塞給遙……<br>
+      最強邊緣人的異世界困難模式，正式開始！
     </div>
     <button class="button" id="left-path">左邊遠遠有一人的道路</button>
     <button class="button" id="right-path">右邊森林疑似有的道路</button>
@@ -92,10 +103,10 @@
     });
 
     function updateStory(text) {
-      storyEl.classList.remove('fadeIn');
-      void storyEl.offsetWidth; // 觸發重繪
+      storyEl.style.animation = 'none';
+      void storyEl.offsetWidth; // reset animation
       storyEl.innerHTML = text;
-      storyEl.classList.add('fadeIn');
+      storyEl.style.animation = 'fadeIn 0.6s ease-in-out forwards';
     }
 
     function leftPath() {
