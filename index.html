@@ -65,6 +65,8 @@
     let currentStep = 0;
     const storyEl = document.getElementById('story');
     const audio = document.getElementById('bg-music');
+    const leftButton = document.getElementById('left-path');
+    const rightButton = document.getElementById('right-path');
 
     // Play music when the game starts
     window.onload = () => {
@@ -132,24 +134,44 @@
     }
 
     function updateButtons(text1, text2) {
-        const btn1 = document.getElementById('left-path');
-        const btn2 = document.getElementById('right-path');
-        btn1.innerText = text1;
-        btn2.innerText = text2;
-        btn1.style.display = 'inline-block';
-        btn2.style.display = 'inline-block';
+        leftButton.innerText = text1;
+        rightButton.innerText = text2;
+        leftButton.style.display = 'inline-block';
+        rightButton.style.display = 'inline-block';
     }
 
-    document.getElementById('left-path').addEventListener('click', () => {
-        const choice = document.getElementById('left-path').innerText;
+    leftButton.addEventListener('click', () => {
+        const choice = leftButton.innerText;
         if (currentStep === 0) equipmentInstallation();
         else if (currentStep === 1) equipmentSupport(choice);
+        else if (currentStep === 2) {
+            if (choice === "加大投資進行擴展" || choice === "進行公司內部改革") {
+                typeWriter("你選擇了擴展或改革，公司的未來充滿了挑戰與機會！", () => {
+                    updateButtons("結束遊戲", "重新開始");
+                });
+            } else {
+                typeWriter("你選擇了維持現狀或接受新職位，公司的運營穩定，但面臨著成長的瓶頸。", () => {
+                    updateButtons("結束遊戲", "重新開始");
+                });
+            }
+        }
     });
 
-    document.getElementById('right-path').addEventListener('click', () => {
-        const choice = document.getElementById('right-path').innerText;
+    rightButton.addEventListener('click', () => {
+        const choice = rightButton.innerText;
         if (currentStep === 0) internationalTrade();
         else if (currentStep === 1) tradeNegotiation(choice);
+        else if (currentStep === 2) {
+            if (choice === "開設更多分支機構" || choice === "進行多元化經營") {
+                typeWriter("你選擇了開設新分支或經營多元業務，迎來了公司的一次重大突破！", () => {
+                    updateButtons("結束遊戲", "重新開始");
+                });
+            } else {
+                typeWriter("你選擇了穩定與客戶關係，公司維持現狀，但未能拓展新的市場。", () => {
+                    updateButtons("結束遊戲", "重新開始");
+                });
+            }
+        }
     });
 
     startGame();
