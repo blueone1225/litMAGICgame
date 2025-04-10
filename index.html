@@ -1,14 +1,143 @@
-
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>litMAGICgame</title>
-  </head>
-  <body>
-    <h1>Welcome to litMAGICgame!</h1>
-    <p>Your game is here. Enjoy!</p>
-    <!-- 這裡可以放置你的遊戲內容 -->
-  </body>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>平行時空異世界冒險遊戲</title>
+  <style>
+    body {
+      font-family: "微軟正黑體", sans-serif;
+      background-color: #1f1f2e;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+    }
+    .game-container {
+      max-width: 700px;
+      margin: 50px auto;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      padding: 30px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #f9c74f;
+    }
+    .dialogue-box {
+      background: #2a2a3d;
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 18px;
+      line-height: 1.6;
+      border-left: 5px solid #f94144;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+    .button {
+      background-color: #577590;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin-top: 20px;
+      margin-right: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .button:hover {
+      background-color: #495867;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <h1>平行時空異世界</h1>
+    <div id="story" class="dialogue-box">
+      歡迎來到文字冒險遊戲！<br>
+      在高中度過「邊緣人」生活的遙，上課時突然跟同班同學一起被召喚到異世界。只要從外掛技能清單中選擇喜歡的技能，神明就會賜予你── 本來應該是這樣的，但外掛技能是先搶先贏，所以強勢技能都已經被同學們拿完了！？<br><br>由於神明惱羞成怒，遙被硬塞了全部剩下的負面技能，還因為技能『邊緣人』的關係，到了異世界也只能孤單一人冒險……。
+    </div>
+    <button class="button" id="left-path">左邊遠遠有一人的道路</button>
+    <button class="button" id="right-path">右邊森林疑似有的道路</button>
+  </div>
+
+  <script>
+    let currentStep = 0;
+
+    const storyEl = document.getElementById('story');
+    const leftBtn = document.getElementById('left-path');
+    const rightBtn = document.getElementById('right-path');
+
+    leftBtn.addEventListener('click', () => {
+      if (currentStep === 0) {
+        leftPath();
+      } else if (currentStep === 1) {
+        wealthOrWisdom(leftBtn.innerText);
+      }
+    });
+
+    rightBtn.addEventListener('click', () => {
+      if (currentStep === 0) {
+        rightPath();
+      } else if (currentStep === 1) {
+        escapeTrap(rightBtn.innerText);
+      }
+    });
+
+    function updateStory(text) {
+      storyEl.classList.remove('fadeIn');
+      void storyEl.offsetWidth; // 觸發重繪
+      storyEl.innerHTML = text;
+      storyEl.classList.add('fadeIn');
+    }
+
+    function leftPath() {
+      currentStep = 1;
+      updateStory("你選擇了左邊的道路，走了幾分鐘後，你遇到了一位神秘的老人。<br>老人問你：『你是想要財富還是智慧？』");
+      updateButtons('給錢錢', 'IQ200');
+    }
+
+    function rightPath() {
+      currentStep = 1;
+      updateStory("你選擇了右邊的道路，走了一會兒，你發現自己陷入了一個陷阱。<br>你想用力跳出陷阱，還是靜下心來觀察？");
+      updateButtons('Jump', '左顧右盼');
+    }
+
+    function wealthOrWisdom(path) {
+      if (path === "給錢錢") {
+        updateStory("老人給了你一箱珠寶、奇蛋與金子，恭喜你獲得了財富！");
+      } else if (path === "IQ200") {
+        updateStory("老人傳授給你千年古老的智慧，你的智慧大增！");
+      }
+      resetButtons();
+    }
+
+    function escapeTrap(path) {
+      if (path === "Jump") {
+        updateStory("你奮力一跳，成功逃脫了陷阱，獲得自由！");
+      } else if (path === "左顧右盼") {
+        updateStory("你觀察陷阱的結構，巧妙地逃脫了困境──最強迷宮皇也是邊緣人！");
+      }
+      resetButtons();
+    }
+
+    function updateButtons(option1, option2) {
+      leftBtn.innerText = option1;
+      rightBtn.innerText = option2;
+    }
+
+    function resetButtons() {
+      leftBtn.style.display = 'none';
+      rightBtn.style.display = 'none';
+    }
+  </script>
+
+</body>
 </html>
