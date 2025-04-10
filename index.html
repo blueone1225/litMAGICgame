@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EZ搜公司工程冒險</title>
+    <title>工程行冒險</title>
 
     <!-- Open Graph Meta Tags for better link preview -->
-    <meta property="og:title" content="EZ搜公司工程冒險">
+    <meta property="og:title" content="公司工程冒險">
     <meta property="og:description" content="參加不同的工程項目，做出選擇影響公司的發展。">
     <meta property="og:image" content="https://images.unsplash.com/photo-1732692699579-592f37bf4cdf">
     <meta property="og:url" content="https://blueone1225.github.io/litMAGICgame/">
@@ -56,7 +56,7 @@
 <body>
 
 <div class="game-container">
-    <h1>EZ搜公司工程冒險</h1>
+    <h1>公司工程冒險</h1>
     <div id="story" class="story-text"></div>
     <button class="button" id="left-path"></button>
     <button class="button" id="right-path"></button>
@@ -95,7 +95,7 @@
 
     function startGame() {
         currentStep = 0;
-        typeWriter("歡迎來到EZ搜公司工程冒險！你是一位工程師，剛加入了圖昀坦工程行，接下來你需要在工作中做出選擇，讓公司順利發展。", () => {
+        typeWriter("歡迎來到公司工程冒險！你是一位工程師，剛加入了昀坦工程行，接下來你需要在工作中做出選擇，讓公司順利發展。", () => {
             updateButtons("參加設備安裝項目", "參加國際貿易項目");
         });
     }
