@@ -1,154 +1,146 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>平行時空異世界冒險遊戲</title>
-  <style>
-    body {
-      font-family: "微軟正黑體", sans-serif;
-      background-color: #fff9e6;
-      margin: 0;
-      padding: 0;
-      color: #4e3b1f;
-    }
-    .game-container {
-      max-width: 700px;
-      margin: 50px auto;
-      background: #fff3c4;
-      border-radius: 15px;
-      box-shadow: 0 0 10px rgba(150, 110, 60, 0.2);
-      padding: 30px;
-      border: 2px solid #e0a458;
-    }
-    h1 {
-      text-align: center;
-      font-size: 28px;
-      margin-bottom: 20px;
-      color: #a25c00;
-    }
-    .dialogue-box {
-      background: #fff7da;
-      padding: 20px;
-      border-radius: 10px;
-      font-size: 18px;
-      line-height: 1.6;
-      border-left: 5px solid #d6862f;
-      opacity: 0;
-      animation: fadeIn 0.6s ease-in-out forwards;
-    }
-    .button {
-      background-color: #e6a84b;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      margin-top: 20px;
-      margin-right: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    .button:hover {
-      background-color: #cf8c2e;
-    }
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>平行時空異世界冒險</title>
+    <style>
+        body {
+            font-family: "微軟正黑體", sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fdf6e3;
+            color: #4e3b2c;
+            background-image: url('https://images.unsplash.com/photo-1526481280690-902a44eeb2c6');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+        .game-container {
+            background-color: rgba(255, 248, 220, 0.95);
+            max-width: 700px;
+            margin: 60px auto;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .button {
+            background-color: #d4a55d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background-color: #b97b2f;
+        }
+        .story-text {
+            font-size: 18px;
+            line-height: 1.6;
+            min-height: 150px;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="game-container">
+<div class="game-container">
     <h1>平行時空異世界</h1>
-    <div id="story" class="dialogue-box">
-      歡迎來到文字冒險遊戲！<br>
-      在高中度過「邊緣人」生活的遙，上課時突然跟同班同學一起被召喚到異世界。<br>
-      本來應該可以選擇外掛技能，結果好技能都被搶完了！？<br><br>
-      神明惱羞成怒，把剩下的負面技能全部塞給遙……<br>
-      最強邊緣人的異世界困難模式，正式開始！
-    </div>
-    <button class="button" id="left-path">左邊遠遠有一人的道路</button>
-    <button class="button" id="right-path">右邊森林疑似有的道路</button>
-  </div>
+    <div id="story" class="story-text"></div>
+    <button class="button" id="left-path"></button>
+    <button class="button" id="right-path"></button>
+</div>
+<audio id="bg-music" src="https://cdn.pixabay.com/audio/2022/12/04/audio_6642b32b69.mp3" autoplay loop></audio>
 
-  <script>
+<script>
     let currentStep = 0;
-
     const storyEl = document.getElementById('story');
-    const leftBtn = document.getElementById('left-path');
-    const rightBtn = document.getElementById('right-path');
 
-    leftBtn.addEventListener('click', () => {
-      if (currentStep === 0) {
-        leftPath();
-      } else if (currentStep === 1) {
-        wealthOrWisdom(leftBtn.innerText);
-      }
-    });
+    function typeWriter(text, callback) {
+        let i = 0;
+        storyEl.innerHTML = "";
+        const interval = setInterval(() => {
+            storyEl.innerHTML += text.charAt(i);
+            i++;
+            if (i >= text.length) {
+                clearInterval(interval);
+                if (callback) callback();
+            }
+        }, 40);
+    }
 
-    rightBtn.addEventListener('click', () => {
-      if (currentStep === 0) {
-        rightPath();
-      } else if (currentStep === 1) {
-        escapeTrap(rightBtn.innerText);
-      }
-    });
-
-    function updateStory(text) {
-      storyEl.style.animation = 'none';
-      void storyEl.offsetWidth; // reset animation
-      storyEl.innerHTML = text;
-      storyEl.style.animation = 'fadeIn 0.6s ease-in-out forwards';
+    function startGame() {
+        currentStep = 0;
+        typeWriter("歡迎來到文字冒險遊戲！你是一位高中生，在一場召喚儀式中被傳送到異世界……選擇你的命運！", () => {
+            updateButtons("左邊遠遠有一人的道路", "右邊森林疑似有的道路");
+        });
     }
 
     function leftPath() {
-      currentStep = 1;
-      updateStory("你選擇了左邊的道路，走了幾分鐘後，你遇到了一位神秘的老人。<br>老人問你：『你是想要財富還是智慧？』");
-      updateButtons('給錢錢', 'IQ200');
+        currentStep = 1;
+        typeWriter("你選擇了左邊的道路，遇到了一位神秘的老人。他問你：\"你想要財富還是智慧？\"", () => {
+            updateButtons("給錢錢", "IQ200");
+        });
     }
 
     function rightPath() {
-      currentStep = 1;
-      updateStory("你選擇了右邊的道路，走了一會兒，你發現自己陷入了一個陷阱。<br>你想用力跳出陷阱，還是靜下心來觀察？");
-      updateButtons('Jump', '左顧右盼');
+        currentStep = 1;
+        typeWriter("你選擇了右邊的道路，結果掉入了一個陷阱！你想用力跳出陷阱，還是觀察四周？", () => {
+            updateButtons("Jump", "左顧右盼");
+        });
     }
 
-    function wealthOrWisdom(path) {
-      if (path === "給錢錢") {
-        updateStory("老人給了你一箱珠寶、奇蛋與金子，恭喜你獲得了財富！");
-      } else if (path === "IQ200") {
-        updateStory("老人傳授給你千年古老的智慧，你的智慧大增！");
-      }
-      resetButtons();
+    function wealthOrWisdom(choice) {
+        currentStep = 2;
+        if (choice === "給錢錢") {
+            typeWriter("老人給了你一箱珠寶與金幣，成為了異世界的新富豪！接下來，你要建造自己的城堡嗎？", () => {
+                updateButtons("建城堡", "退休旅遊");
+            });
+        } else if (choice === "IQ200") {
+            typeWriter("你獲得古老的智慧，擁有預知未來的能力！現在你要學習魔法還是預測命運？", () => {
+                updateButtons("魔法學徒", "占卜師");
+            });
+        }
     }
 
-    function escapeTrap(path) {
-      if (path === "Jump") {
-        updateStory("你奮力一跳，成功逃脫了陷阱，獲得自由！");
-      } else if (path === "左顧右盼") {
-        updateStory("你觀察陷阱的結構，巧妙地逃脫了困境──最強迷宮皇也是邊緣人！");
-      }
-      resetButtons();
+    function escapeTrap(choice) {
+        currentStep = 2;
+        if (choice === "Jump") {
+            typeWriter("你奮力一跳，雖然受了點傷但成功逃脫。你接下來想尋找補給品還是立刻逃離森林？", () => {
+                updateButtons("找補給", "逃離森林");
+            });
+        } else if (choice === "左顧右盼") {
+            typeWriter("你觀察周圍，發現一根藤蔓，成功逃出陷阱。前方出現了一個地下通道，你要進去嗎？", () => {
+                updateButtons("進入通道", "返回大路");
+            });
+        }
     }
 
-    function updateButtons(option1, option2) {
-      leftBtn.innerText = option1;
-      rightBtn.innerText = option2;
+    function updateButtons(text1, text2) {
+        const btn1 = document.getElementById('left-path');
+        const btn2 = document.getElementById('right-path');
+        btn1.innerText = text1;
+        btn2.innerText = text2;
+        btn1.style.display = 'inline-block';
+        btn2.style.display = 'inline-block';
     }
 
-    function resetButtons() {
-      leftBtn.style.display = 'none';
-      rightBtn.style.display = 'none';
-    }
-  </script>
+    document.getElementById('left-path').addEventListener('click', () => {
+        const choice = document.getElementById('left-path').innerText;
+        if (currentStep === 0) leftPath();
+        else if (currentStep === 1) wealthOrWisdom(choice);
+    });
+
+    document.getElementById('right-path').addEventListener('click', () => {
+        const choice = document.getElementById('right-path').innerText;
+        if (currentStep === 0) rightPath();
+        else if (currentStep === 1) escapeTrap(choice);
+    });
+
+    startGame();
+</script>
 
 </body>
 </html>
