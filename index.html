@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>平行時空異世界冒險</title>
+    <title>EZ搜公司工程冒險</title>
     <style>
         body {
             font-family: "微軟正黑體", sans-serif;
@@ -49,14 +49,14 @@
 <body>
 
 <div class="game-container">
-    <h1>平行時空異世界</h1>
+    <h1>EZ搜公司工程冒險</h1>
     <div id="story" class="story-text"></div>
     <button class="button" id="left-path"></button>
     <button class="button" id="right-path"></button>
 </div>
 
 <!-- Background Music -->
-<audio id="bg-music" autoplay loop>
+<audio id="bg-music" loop>
     <source src="https://cdn.pixabay.com/audio/2022/12/04/audio_6642b32b69.mp3" type="audio/mp3">
     Your browser does not support the audio element.
 </audio>
@@ -64,6 +64,12 @@
 <script>
     let currentStep = 0;
     const storyEl = document.getElementById('story');
+    const audio = document.getElementById('bg-music');
+
+    // Play music when the game starts
+    window.onload = () => {
+        audio.play();
+    };
 
     function typeWriter(text, callback) {
         let i = 0;
@@ -80,47 +86,47 @@
 
     function startGame() {
         currentStep = 0;
-        typeWriter("歡迎來到文字冒險遊戲！你是一位高中生，在一場召喚儀式中被傳送到異世界……選擇你的命運！", () => {
-            updateButtons("左邊遠遠有一人的道路", "右邊森林疑似有的道路");
+        typeWriter("歡迎來到EZ搜公司工程冒險！你是一位工程師，剛加入了圖昀坦工程行，接下來你需要在工作中做出選擇，讓公司順利發展。", () => {
+            updateButtons("參加設備安裝項目", "參加國際貿易項目");
         });
     }
 
-    function leftPath() {
+    function equipmentInstallation() {
         currentStep = 1;
-        typeWriter("你選擇了左邊的道路，遇到了一位神秘的老人。他問你：\"你想要財富還是智慧？\"", () => {
-            updateButtons("給錢錢", "IQ200");
+        typeWriter("你選擇了參加設備安裝項目。你需要在短時間內完成電梯的安裝，你的團隊遇到了一些挑戰。你會如何應對？", () => {
+            updateButtons("找尋更多技術支援", "立即報告問題給上級");
         });
     }
 
-    function rightPath() {
+    function internationalTrade() {
         currentStep = 1;
-        typeWriter("你選擇了右邊的道路，結果掉入了一個陷阱！你想用力跳出陷阱，還是觀察四周？", () => {
-            updateButtons("Jump", "左顧右盼");
+        typeWriter("你選擇了參加國際貿易項目。你與國外的客戶溝通順利，開始談判一筆大宗的交易。你會如何處理這筆交易？", () => {
+            updateButtons("提供折扣爭取合同", "堅持原價進行交易");
         });
     }
 
-    function wealthOrWisdom(choice) {
+    function equipmentSupport(choice) {
         currentStep = 2;
-        if (choice === "給錢錢") {
-            typeWriter("老人給了你一箱珠寶與金幣，成為了異世界的新富豪！接下來，你要建造自己的城堡嗎？", () => {
-                updateButtons("建城堡", "退休旅遊");
+        if (choice === "找尋更多技術支援") {
+            typeWriter("你成功找到了更多技術支援，安裝工程順利完成，客戶非常滿意。接下來你會如何分配利潤？", () => {
+                updateButtons("加大投資進行擴展", "進行公司內部改革");
             });
-        } else if (choice === "IQ200") {
-            typeWriter("你獲得古老的智慧，擁有預知未來的能力！現在你要學習魔法還是預測命運？", () => {
-                updateButtons("魔法學徒", "占卜師");
+        } else if (choice === "立即報告問題給上級") {
+            typeWriter("你報告了問題並獲得了高層的指導。這次經驗讓你在公司內部得到了提升。", () => {
+                updateButtons("接受新職位", "繼續維持現狀");
             });
         }
     }
 
-    function escapeTrap(choice) {
+    function tradeNegotiation(choice) {
         currentStep = 2;
-        if (choice === "Jump") {
-            typeWriter("你奮力一跳，雖然受了點傷但成功逃脫。你接下來想尋找補給品還是立刻逃離森林？", () => {
-                updateButtons("找補給", "逃離森林");
+        if (choice === "提供折扣爭取合同") {
+            typeWriter("你通過提供折扣成功簽下大合同，並且進一步拓展了公司在國際市場的份額。", () => {
+                updateButtons("開設更多分支機構", "聚焦在本地市場");
             });
-        } else if (choice === "左顧右盼") {
-            typeWriter("你觀察周圍，發現一根藤蔓，成功逃出陷阱。前方出現了一個地下通道，你要進去嗎？", () => {
-                updateButtons("進入通道", "返回大路");
+        } else if (choice === "堅持原價進行交易") {
+            typeWriter("雖然價格較高，但你成功保證了公司的盈利，並獲得了客戶的信任。", () => {
+                updateButtons("加強與客戶的關係", "進行多元化經營");
             });
         }
     }
@@ -136,14 +142,14 @@
 
     document.getElementById('left-path').addEventListener('click', () => {
         const choice = document.getElementById('left-path').innerText;
-        if (currentStep === 0) leftPath();
-        else if (currentStep === 1) wealthOrWisdom(choice);
+        if (currentStep === 0) equipmentInstallation();
+        else if (currentStep === 1) equipmentSupport(choice);
     });
 
     document.getElementById('right-path').addEventListener('click', () => {
         const choice = document.getElementById('right-path').innerText;
-        if (currentStep === 0) rightPath();
-        else if (currentStep === 1) escapeTrap(choice);
+        if (currentStep === 0) internationalTrade();
+        else if (currentStep === 1) tradeNegotiation(choice);
     });
 
     startGame();
