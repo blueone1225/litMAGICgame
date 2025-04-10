@@ -33,6 +33,8 @@
             border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            width: 100%;
+            text-align: center;
         }
         .button:hover {
             background-color: #b97b2f;
@@ -52,7 +54,12 @@
     <button class="button" id="left-path"></button>
     <button class="button" id="right-path"></button>
 </div>
-<audio id="bg-music" src="https://cdn.pixabay.com/audio/2022/12/04/audio_6642b32b69.mp3" autoplay loop></audio>
+
+<!-- Background Music -->
+<audio id="bg-music" autoplay loop>
+    <source src="https://cdn.pixabay.com/audio/2022/12/04/audio_6642b32b69.mp3" type="audio/mp3">
+    Your browser does not support the audio element.
+</audio>
 
 <script>
     let currentStep = 0;
