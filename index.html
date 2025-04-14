@@ -61,6 +61,7 @@
         this.vy = 0;
         this.hp = 100;
         this.maxHp = 100;
+        this.dead = false;
       }
       draw() {
         ctx.fillStyle = this.color;
@@ -83,6 +84,8 @@
         this.dashing = false;
         this.invincible = 0;
         this.score = 0;
+        this.autoFire = false;
+        this.lastMelee = 0;
       }
       update() {
         if (this.invincible > 0) this.invincible--;
@@ -125,6 +128,7 @@
     let player = new Player();
     let enemies = [];
     let bullets = [];
+    let effects = [];
     let keys = {};
 
     function spawnEnemy() {
@@ -142,42 +146,66 @@
       document.getElementById("score").innerText = player.score;
     }
 
+    function meleeAttack() {
+      if (Date.now() - player.lastMelee < 500) return; // cooldown
+      player.lastMelee = Date.now();
+      let melee = new Entity(player.x - 10, player.y - 10, player.w + 20, player.h + 20, "rgba(255,255,0,0.3)");
+      enemies.forEach(e => {
+        if (!e.dead && melee.intersect(e)) {
+          e.hp -= 40;
+          if (e.hp <= 0) killEnemy(e);
+        }
+      });
+    }
+
+    function killEnemy(enemy) {
+      enemy.dead = true;
+      player.score += 10;
+      effects.push({x: enemy.x, y: enemy.y, time: 20});
+    }
+
+    function drawEffects() {
+      for (let i = effects.length - 1; i >= 0; i--) {
+        const eff = effects[i];
+        ctx.beginPath();
+        ctx.arc(eff.x + 20, eff.y + 20, 30 - eff.time, 0, 2 * Math.PI);
+        ctx.fillStyle = `rgba(255,255,0,${eff.time / 20})`;
+        ctx.fill();
+        eff.time--;
+        if (eff.time <= 0) effects.splice(i, 1);
+      }
+    }
+
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // update
       player.update();
       enemies.forEach(e => e.update());
       bullets.forEach(b => b.update());
 
-      // collision
+      if (player.autoFire && Date.now() % 5 === 0) {
+        bullets.push(new Bullet(player.x + 15, player.y, 0, -10));
+      }
+
       for (let e of enemies) {
-        if (player.intersect(e) && player.invincible === 0) {
+        if (!e.dead && player.intersect(e) && player.invincible === 0) {
           player.hp -= 10;
           player.invincible = 30;
           if (player.hp <= 0) alert("你死了");
         }
         for (let b of bullets) {
-          if (b.intersect(e)) {
+          if (!e.dead && b.intersect(e)) {
             e.hp -= 25;
             b.x = -9999;
-            if (e.hp <= 0) {
-              e.x = -9999;
-              player.score += 10;
-              // 特效
-              ctx.beginPath();
-              ctx.arc(e.x, e.y, 30, 0, 2 * Math.PI);
-              ctx.strokeStyle = "#fff";
-              ctx.stroke();
-            }
+            if (e.hp <= 0) killEnemy(e);
           }
         }
       }
 
-      // draw
       player.draw();
-      enemies.forEach(e => e.draw());
+      enemies.forEach(e => { if (!e.dead) e.draw(); });
       bullets.forEach(b => b.draw());
+      drawEffects();
       drawHPBar();
       drawScore();
 
@@ -186,9 +214,7 @@
 
     window.addEventListener("keydown", e => {
       keys[e.key] = true;
-      if (e.key === " ") {
-        bullets.push(new Bullet(player.x + 15, player.y, 0, -10));
-      }
+      if (e.key === " ") bullets.push(new Bullet(player.x + 15, player.y, 0, -10));
       if (e.key === "Shift") {
         if (!player.dashing) {
           player.x += player.vx * 20;
@@ -196,8 +222,13 @@
           setTimeout(() => (player.dashing = false), 200);
         }
       }
+      if (e.key === "y") player.autoFire = true;
+      if (e.key === "z") meleeAttack();
     });
-    window.addEventListener("keyup", e => (keys[e.key] = false));
+    window.addEventListener("keyup", e => {
+      keys[e.key] = false;
+      if (e.key === "y") player.autoFire = false;
+    });
 
     function controlPlayer() {
       player.vx = player.vy = 0;
