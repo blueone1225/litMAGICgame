@@ -1,253 +1,199 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>學生性格分組系統</title>
+  <meta charset="UTF-8">
+  <title>動作遊戲</title>
   <style>
-    body { font-family: 微軟正黑體; background: #f0fdf4; color: #1b5e20; padding: 20px; }
-    h1 { color: #33691e; text-align: center; }
-    .trait-box {
-      border: 2px dashed #a5d6a7;
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      background: #e8f5e9;
-    }
-    .trait-box h3 {
-      margin-top: 0;
-      text-align: center;
-    }
-    button {
-      padding: 6px 12px;
-      background-color: #66bb6a;
-      border: none;
-      border-radius: 6px;
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(#111, #222);
       color: white;
-      font-weight: bold;
-      cursor: pointer;
-      margin: 5px;
+      font-family: sans-serif;
     }
-    button:hover {
-      background-color: #4caf50;
+
+    #gameContainer {
+      position: relative;
+      width: 800px;
+      height: 400px;
+      margin: 20px auto;
+      background-color: #000;
+      border: 2px solid #555;
+      overflow: hidden;
     }
-    .group {
-      border: 1px solid #c8e6c9;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
-      background: #ffffffb0;
+
+    #player {
+      position: absolute;
+      bottom: 0;
+      left: 100px;
+      width: 40px;
+      height: 40px;
+      background-color: yellow;
+      transition: left 0.05s, bottom 0.05s;
+      animation: glowFlash 1.2s infinite alternate;
     }
-    #result {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
+
+    @keyframes glowFlash {
+      0% { box-shadow: 0 0 5px #ffff33; }
+      100% { box-shadow: 0 0 20px 5px #ffff99; }
     }
-    .group div {
+
+    .invincible {
+      animation: blink 0.2s steps(2, start) infinite;
+    }
+
+    @keyframes blink {
+      to {
+        visibility: hidden;
+      }
+    }
+
+    .enemy {
+      position: absolute;
+      bottom: 0;
+      width: 40px;
+      height: 40px;
+      background-color: red;
+      animation: moveEnemy 6s linear infinite;
+    }
+
+    @keyframes moveEnemy {
+      0% { left: 800px; }
+      100% { left: -50px; }
+    }
+
+    #hpBarContainer {
+      width: 300px;
+      height: 20px;
+      border: 2px solid #fff;
+      background: #222;
+      margin: 10px auto;
+    }
+
+    #hpBar {
+      height: 100%;
+      background: linear-gradient(to right, limegreen, green);
       width: 100%;
-      margin: 10px 0;
+      transition: width 0.3s ease;
     }
-    .student-item {
-      display: inline-block;
-      margin: 3px 5px;
-      background: #c8e6c9;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-    .delete-btn {
-      background: transparent;
-      color: red;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-      margin-left: 5px;
-    }
-    .edit-btn {
-      background: transparent;
-      color: #ff9800;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-      margin-left: 5px;
-    }
-    @media (min-width: 600px) {
-      .group div { width: 45%; }
-    }
-    @media (min-width: 768px) {
-      .group div { width: 30%; }
-    }
-    @media (min-width: 1024px) {
-      .group div { width: 22%; }
+
+    #info {
+      text-align: center;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
+  <div id="hpBarContainer">
+    <div id="hpBar"></div>
+  </div>
 
-<h1>🌳 學生性格分組系統</h1>
-<button onclick="generateGroups()">開始分組</button>
+  <div id="gameContainer">
+    <div id="player"></div>
 
-<div class="trait-box">
-  <h3>🧑‍🏫 可照顧別人</h3>
-  <div id="careList"></div>
-  <input type="text" id="careInput" placeholder="輸入名字">
-  <button onclick="addName('care')">新增</button>
-</div>
+    <!-- 你可以複製這整個 .enemy 來加更多怪 -->
+    <div class="enemy" style="top: 200px;"></div>
+    <div class="enemy" style="top: 300px; animation-delay: 3s;"></div>
+  </div>
 
-<div class="trait-box">
-  <h3>🐢 內向型</h3>
-  <div id="shyList"></div>
-  <input type="text" id="shyInput" placeholder="輸入名字">
-  <button onclick="addName('shy')">新增</button>
-</div>
+  <div id="info">使用 A/D 或 ←/→ 移動，Space/W/↑ 跳，Shift+方向 Dash 閃避</div>
 
-<div class="trait-box">
-  <h3>🤝 中間值</h3>
-  <div id="neutralList"></div>
-  <input type="text" id="neutralInput" placeholder="輸入名字">
-  <button onclick="addName('neutral')">新增</button>
-</div>
+  <script>
+    const player = document.getElementById("player");
+    const enemies = document.querySelectorAll(".enemy");
+    const hpBar = document.getElementById("hpBar");
 
-<h2>📦 分組結果</h2>
-<div id="result"></div>
+    let playerX = 100;
+    let playerY = 0;
+    let velocityY = 0;
+    let jumping = false;
+    let keys = {};
+    let gravity = 1;
+    let dashCooldown = false;
+    let invincible = false;
+    let maxHP = 100;
+    let currentHP = 100;
 
-<script>
-  let care = ["小芸", "阿傑", "怡君"];
-  let shy = ["子涵", "志偉", "靜儀", "冠宇"];
-  let neutral = ["小瑜", "偉翔", "佩珊", "宏昌"];
-  let currentTrait = ''; // 用來追蹤當前選擇的屬性
-  let currentName = ''; // 用來追蹤當前編輯的名字
-
-  function shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-  }
-
-  function distributeEvenly(list, groups) {
-    list.forEach((person, i) => {
-      groups[i % groups.length].push(person);
-    });
-  }
-
-  function generateGroups() {
-    shuffle(care);
-    shuffle(shy);
-    shuffle(neutral);
-
-    const groupCount = 3;
-    const groups = Array.from({ length: groupCount }, () => ({
-      members: [],
-      care: 0,
-      shy: 0,
-      neutral: 0
-    }));
-
-    distributeEvenly(care, groups.map(g => g.members));
-    distributeEvenly(shy, groups.map(g => g.members));
-    distributeEvenly(neutral, groups.map(g => g.members));
-
-    groups.forEach(group => {
-      group.care = group.members.filter(name => care.includes(name)).length;
-      group.shy = group.members.filter(name => shy.includes(name)).length;
-      group.neutral = group.members.filter(name => neutral.includes(name)).length;
-    });
-
-    const output = document.getElementById("result");
-    output.innerHTML = '';
-    groups.forEach((group, i) => {
-      const div = document.createElement("div");
-      div.className = "group";
-      div.innerHTML = `
-        <strong>第 ${i + 1} 組：</strong><br>
-        成員：${group.members.join("、")}<br>
-        👥 組成規則：🧑‍🏫 ${group.care} 位，🐢 ${group.shy} 位，🤝 ${group.neutral} 位
-      `;
-      output.appendChild(div);
-    });
-  }
-
-  function addName(trait) {
-    let input = document.getElementById(trait + "Input");
-    let name = input.value.trim();
-    if (!name) return;
-
-    if (currentTrait && currentTrait !== trait) {
-      alert('請先清空編輯的名字！');
-      return;
-    }
-
-    if (currentName) {
-      // 如果正在編輯名字，則更新名字
-      if (trait === "care") {
-        const index = care.indexOf(currentName);
-        care[index] = name;
+    function movePlayer() {
+      if ((keys["a"] || keys["ArrowLeft"]) && !keys["Shift"]) {
+        playerX -= 5;
       }
-      if (trait === "shy") {
-        const index = shy.indexOf(currentName);
-        shy[index] = name;
-      }
-      if (trait === "neutral") {
-        const index = neutral.indexOf(currentName);
-        neutral[index] = name;
+      if ((keys["d"] || keys["ArrowRight"]) && !keys["Shift"]) {
+        playerX += 5;
       }
 
-      currentName = ''; // 清空編輯狀態
-    } else {
-      if (trait === "care") care.push(name);
-      if (trait === "shy") shy.push(name);
-      if (trait === "neutral") neutral.push(name);
+      if ((keys["Shift"] && keys["a"]) || (keys["Shift"] && keys["ArrowLeft"])) {
+        if (!dashCooldown) {
+          playerX -= 100;
+          dashCooldown = true;
+          setTimeout(() => dashCooldown = false, 800);
+        }
+      }
+      if ((keys["Shift"] && keys["d"]) || (keys["Shift"] && keys["ArrowRight"])) {
+        if (!dashCooldown) {
+          playerX += 100;
+          dashCooldown = true;
+          setTimeout(() => dashCooldown = false, 800);
+        }
+      }
+
+      if ((keys[" "] || keys["w"] || keys["ArrowUp"]) && !jumping) {
+        velocityY = 15;
+        jumping = true;
+      }
+
+      velocityY -= gravity;
+      playerY += velocityY;
+
+      if (playerY <= 0) {
+        playerY = 0;
+        jumping = false;
+      }
+
+      playerX = Math.max(0, Math.min(760, playerX));
+      player.style.left = playerX + "px";
+      player.style.bottom = playerY + "px";
+
+      checkCollision();
+      requestAnimationFrame(movePlayer);
     }
 
-    input.value = "";
-    updateList(trait);
-  }
+    function checkCollision() {
+      const playerRect = player.getBoundingClientRect();
 
-  function editName(trait, name) {
-    currentTrait = trait;
-    currentName = name; // 記錄正在編輯的名字
-    document.getElementById(trait + "Input").value = name;
-  }
+      enemies.forEach(enemy => {
+        const enemyRect = enemy.getBoundingClientRect();
 
-  function deleteName(trait, name) {
-    if (trait === "care") care = care.filter(n => n !== name);
-    if (trait === "shy") shy = shy.filter(n => n !== name);
-    if (trait === "neutral") neutral = neutral.filter(n => n !== name);
+        const overlap = !(
+          playerRect.right < enemyRect.left ||
+          playerRect.left > enemyRect.right ||
+          playerRect.bottom < enemyRect.top ||
+          playerRect.top > enemyRect.bottom
+        );
 
-    updateList(trait);
-  }
+        if (overlap && !invincible) {
+          takeDamage(20);
+        }
+      });
+    }
 
-  function updateList(trait) {
-    let container = document.getElementById(trait + "List");
-    container.innerHTML = "";
-    let list = trait === "care" ? care : trait === "shy" ? shy : neutral;
+    function takeDamage(amount) {
+      currentHP -= amount;
+      if (currentHP < 0) currentHP = 0;
+      hpBar.style.width = (currentHP / maxHP * 100) + "%";
 
-    list.forEach(name => {
-      let span = document.createElement("span");
-      span.className = "student-item";
-      span.textContent = name;
+      invincible = true;
+      player.classList.add("invincible");
+      setTimeout(() => {
+        player.classList.remove("invincible");
+        invincible = false;
+      }, 1000);
+    }
 
-      let del = document.createElement("button");
-      del.textContent = "❌";
-      del.className = "delete-btn";
-      del.onclick = () => deleteName(trait, name);
+    document.addEventListener("keydown", (e) => keys[e.key] = true);
+    document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-      let edit = document.createElement("button");
-      edit.textContent = "✏️";
-      edit.className = "edit-btn";
-      edit.onclick = () => editName(trait, name);
-
-      span.appendChild(edit);
-      span.appendChild(del);
-      container.appendChild(span);
-    });
-  }
-
-  // 初始化畫面
-  updateList("care");
-  updateList("shy");
-  updateList("neutral");
-</script>
-
+    movePlayer();
+  </script>
 </body>
 </html>
