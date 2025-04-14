@@ -2,10 +2,11 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>學生性格分組</title>
   <style>
     body { font-family: 微軟正黑體; background: #f0fdf4; color: #1b5e20; padding: 20px; }
-    h1 { color: #33691e; }
+    h1 { color: #33691e; text-align: center; }
     .trait-box {
       border: 2px dashed #a5d6a7;
       padding: 10px;
@@ -15,6 +16,7 @@
     }
     .trait-box h3 {
       margin-top: 0;
+      text-align: center;
     }
     button {
       padding: 10px 20px;
@@ -24,6 +26,8 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      display: block;
+      margin: 0 auto;
     }
     button:hover {
       background-color: #4caf50;
@@ -35,6 +39,51 @@
       border-radius: 6px;
       background: #ffffffb0;
     }
+    #result {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    }
+    .group div {
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    /* 響應式設計 */
+    @media (min-width: 600px) {
+      .group div {
+        width: 45%;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .group div {
+        width: 30%;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .group div {
+        width: 22%;
+      }
+    }
+
+    .label {
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 5px;
+      background-color: #81c784;
+      color: white;
+    }
+
+    .shy-label {
+      background-color: #66bb6a;
+    }
+
+    .neutral-label {
+      background-color: #ffb74d;
+    }
+
   </style>
 </head>
 <body>
@@ -73,26 +122,29 @@
     }
   }
 
-  function distributeEvenly(list, groups) {
-    list.forEach((person, i) => {
-      groups[i % groups.length].push(person);
-    });
-  }
-
   function generateGroups() {
     // 打亂每個性格類別
     shuffle(care);
     shuffle(shy);
     shuffle(neutral);
 
-    // 指定要幾組
-    const groupCount = 3;
-    const groups = Array.from({ length: groupCount }, () => []);
+    // 設定分組數量
+    const groups = [
+      { care: 2, shy: 2, neutral: 5 }, // A 組
+      { care: 2, shy: 2, neutral: 4 }, // B 組
+      { care: 1, shy: 2, neutral: 5 }  // C 組
+    ];
 
-    // 平均分配每類性格進組別
-    distributeEvenly(care, groups);
-    distributeEvenly(shy, groups);
-    distributeEvenly(neutral, groups);
+    // 生成分組
+    const groupDetails = groups.map((group, idx) => {
+      const careGroup = care.splice(0, group.care);
+      const shyGroup = shy.splice(0, group.shy);
+      const neutralGroup = neutral.splice(0, group.neutral);
+      return { 
+        groupName: `第 ${idx + 1} 組`, 
+        members: [...careGroup, ...shyGroup, ...neutralGroup]
+      };
+    });
 
     // 顯示各性格名單
     document.getElementById("careList").innerText = care.join("、");
@@ -102,10 +154,20 @@
     // 顯示分組結果
     const output = document.getElementById("result");
     output.innerHTML = '';
-    groups.forEach((group, i) => {
+    groupDetails.forEach(group => {
       const div = document.createElement("div");
       div.className = "group";
-      div.innerHTML = `<strong>第 ${i + 1} 組：</strong> ${group.join("、")}`;
+      let groupContent = `<strong>${group.groupName}：</strong>`;
+      group.members.forEach(member => {
+        if (care.includes(member)) {
+          groupContent += `<span class="label">可照顧別人</span> ${member} `;
+        } else if (shy.includes(member)) {
+          groupContent += `<span class="label shy-label">內向型</span> ${member} `;
+        } else if (neutral.includes(member)) {
+          groupContent += `<span class="label neutral-label">中間值</span> ${member} `;
+        }
+      });
+      div.innerHTML = groupContent;
       output.appendChild(div);
     });
   }
