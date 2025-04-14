@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>學生性格分組</title>
+  <title>學生性格分組系統</title>
   <style>
     body { font-family: 微軟正黑體; background: #f0fdf4; color: #1b5e20; padding: 20px; }
     h1 { color: #33691e; text-align: center; }
@@ -19,15 +19,14 @@
       text-align: center;
     }
     button {
-      padding: 10px 20px;
+      padding: 6px 12px;
       background-color: #66bb6a;
       border: none;
       border-radius: 6px;
       color: white;
       font-weight: bold;
       cursor: pointer;
-      display: block;
-      margin: 0 auto;
+      margin: 5px;
     }
     button:hover {
       background-color: #4caf50;
@@ -49,23 +48,31 @@
       margin: 10px 0;
     }
 
-    /* 響應式設計 */
+    .student-item {
+      display: inline-block;
+      margin: 3px 5px;
+      background: #c8e6c9;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .delete-btn {
+      background: transparent;
+      color: red;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+
     @media (min-width: 600px) {
-      .group div {
-        width: 45%;
-      }
+      .group div { width: 45%; }
     }
-
     @media (min-width: 768px) {
-      .group div {
-        width: 30%;
-      }
+      .group div { width: 30%; }
     }
-
     @media (min-width: 1024px) {
-      .group div {
-        width: 22%;
-      }
+      .group div { width: 22%; }
     }
   </style>
 </head>
@@ -76,27 +83,32 @@
 
 <div class="trait-box">
   <h3>🧑‍🏫 可照顧別人</h3>
-  <p id="careList"></p>
+  <div id="careList"></div>
+  <input type="text" id="careInput" placeholder="輸入名字">
+  <button onclick="addName('care')">新增</button>
 </div>
 
 <div class="trait-box">
   <h3>🐢 內向型</h3>
-  <p id="shyList"></p>
+  <div id="shyList"></div>
+  <input type="text" id="shyInput" placeholder="輸入名字">
+  <button onclick="addName('shy')">新增</button>
 </div>
 
 <div class="trait-box">
   <h3>🤝 中間值</h3>
-  <p id="neutralList"></p>
+  <div id="neutralList"></div>
+  <input type="text" id="neutralInput" placeholder="輸入名字">
+  <button onclick="addName('neutral')">新增</button>
 </div>
 
 <h2>📦 分組結果</h2>
 <div id="result"></div>
 
 <script>
-  // 👇 資料分類
-  const care = ["小芸", "阿傑", "怡君"];       // 可照顧別人
-  const shy = ["子涵", "志偉", "靜儀", "冠宇"]; // 內向型
-  const neutral = ["小瑜", "偉翔", "佩珊", "宏昌"]; // 中間型
+  let care = ["小芸", "阿傑", "怡君"];
+  let shy = ["子涵", "志偉", "靜儀", "冠宇"];
+  let neutral = ["小瑜", "偉翔", "佩珊", "宏昌"];
 
   function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -112,26 +124,17 @@
   }
 
   function generateGroups() {
-    // 打亂每個性格類別
     shuffle(care);
     shuffle(shy);
     shuffle(neutral);
 
-    // 指定要幾組
     const groupCount = 3;
     const groups = Array.from({ length: groupCount }, () => []);
 
-    // 平均分配每類性格進組別
     distributeEvenly(care, groups);
     distributeEvenly(shy, groups);
     distributeEvenly(neutral, groups);
 
-    // 顯示各性格名單
-    document.getElementById("careList").innerText = care.join("、");
-    document.getElementById("shyList").innerText = shy.join("、");
-    document.getElementById("neutralList").innerText = neutral.join("、");
-
-    // 顯示分組結果
     const output = document.getElementById("result");
     output.innerHTML = '';
     groups.forEach((group, i) => {
@@ -141,6 +144,52 @@
       output.appendChild(div);
     });
   }
+
+  function addName(trait) {
+    let input = document.getElementById(trait + "Input");
+    let name = input.value.trim();
+    if (!name) return;
+
+    if (trait === "care") care.push(name);
+    if (trait === "shy") shy.push(name);
+    if (trait === "neutral") neutral.push(name);
+
+    input.value = "";
+    updateList(trait);
+  }
+
+  function deleteName(trait, name) {
+    if (trait === "care") care = care.filter(n => n !== name);
+    if (trait === "shy") shy = shy.filter(n => n !== name);
+    if (trait === "neutral") neutral = neutral.filter(n => n !== name);
+
+    updateList(trait);
+  }
+
+  function updateList(trait) {
+    let container = document.getElementById(trait + "List");
+    container.innerHTML = "";
+    let list = trait === "care" ? care : trait === "shy" ? shy : neutral;
+
+    list.forEach(name => {
+      let span = document.createElement("span");
+      span.className = "student-item";
+      span.textContent = name;
+
+      let del = document.createElement("button");
+      del.textContent = "❌";
+      del.className = "delete-btn";
+      del.onclick = () => deleteName(trait, name);
+
+      span.appendChild(del);
+      container.appendChild(span);
+    });
+  }
+
+  // 初始畫面更新
+  updateList("care");
+  updateList("shy");
+  updateList("neutral");
 </script>
 
 </body>
