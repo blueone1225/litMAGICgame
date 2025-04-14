@@ -1,30 +1,70 @@
-
-
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>烤肉分組助手</title>
+  <title>學生性格分組</title>
   <style>
-    body { font-family: 微軟正黑體; background: #f1f8e9; color: #2e7d32; padding: 20px; }
-    h1 { color: #1b5e20; }
-    button { padding: 10px; margin: 10px 0; background: #81c784; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background: #66bb6a; }
-    .group { margin: 10px 0; padding: 10px; border: 1px solid #a5d6a7; border-radius: 8px; background: #ffffffc0; }
+    body { font-family: 微軟正黑體; background: #f0fdf4; color: #1b5e20; padding: 20px; }
+    h1 { color: #33691e; }
+    .trait-box {
+      border: 2px dashed #a5d6a7;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      background: #e8f5e9;
+    }
+    .trait-box h3 {
+      margin-top: 0;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #66bb6a;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #4caf50;
+    }
+    .group {
+      border: 1px solid #c8e6c9;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      background: #ffffffb0;
+    }
   </style>
 </head>
 <body>
 
-<h1>🍖 學生班--烤肉分組工具</h1>
-<button onclick="generateGroups()">重新分組</button>
+<h1>🌳 學生性格分組系統</h1>
+<button onclick="generateGroups()">開始分組</button>
 
-<div id="output"></div>
+<div class="trait-box">
+  <h3>🧑‍🏫 可照顧別人</h3>
+  <p id="careList"></p>
+</div>
+
+<div class="trait-box">
+  <h3>🐢 內向型</h3>
+  <p id="shyList"></p>
+</div>
+
+<div class="trait-box">
+  <h3>🤝 中間值</h3>
+  <p id="neutralList"></p>
+</div>
+
+<h2>📦 分組結果</h2>
+<div id="result"></div>
 
 <script>
-  const A = ["小明", "小美", "阿成", "小莉", "阿軒"]; // 熟
-  const B = ["子瑋", "小安", "小柔", "阿民", "佩佩", "小恩"]; // 普通
-  const C = ["阿賓", "志豪", "小婷", "雨潔"]; // 不熟
+  // 👇 資料分類
+  const care = ["小芸", "阿傑", "怡君"];       // 可照顧別人
+  const shy = ["子涵", "志偉", "靜儀", "冠宇"]; // 內向型
+  const neutral = ["小瑜", "偉翔", "佩珊", "宏昌"]; // 中間型
 
   function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -34,23 +74,38 @@
   }
 
   function distributeEvenly(list, groups) {
-    list.forEach((p, i) => groups[i % groups.length].push(p));
+    list.forEach((person, i) => {
+      groups[i % groups.length].push(person);
+    });
   }
 
   function generateGroups() {
+    // 打亂每個性格類別
+    shuffle(care);
+    shuffle(shy);
+    shuffle(neutral);
+
+    // 指定要幾組
     const groupCount = 3;
     const groups = Array.from({ length: groupCount }, () => []);
-    shuffle(A); shuffle(B); shuffle(C);
-    distributeEvenly(A, groups);
-    distributeEvenly(B, groups);
-    distributeEvenly(C, groups);
 
-    const output = document.getElementById("output");
+    // 平均分配每類性格進組別
+    distributeEvenly(care, groups);
+    distributeEvenly(shy, groups);
+    distributeEvenly(neutral, groups);
+
+    // 顯示各性格名單
+    document.getElementById("careList").innerText = care.join("、");
+    document.getElementById("shyList").innerText = shy.join("、");
+    document.getElementById("neutralList").innerText = neutral.join("、");
+
+    // 顯示分組結果
+    const output = document.getElementById("result");
     output.innerHTML = '';
-    groups.forEach((g, i) => {
+    groups.forEach((group, i) => {
       const div = document.createElement("div");
       div.className = "group";
-      div.innerHTML = `<strong>第 ${i + 1} 組：</strong> ${g.join(", ")}`;
+      div.innerHTML = `<strong>第 ${i + 1} 組：</strong> ${group.join("、")}`;
       output.appendChild(div);
     });
   }
