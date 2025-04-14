@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>動作遊戲 - HTML</title>
+  <title>動作遊戲 - 自動閃避特效版</title>
   <style>
     body {
       margin: 0;
@@ -36,7 +36,7 @@
       background: lime;
       width: 100%;
     }
-    #autoDodgeBtn {
+    #dodge-btn {
       margin-top: 10px;
       padding: 5px 10px;
       background: #333;
@@ -44,14 +44,17 @@
       border: 1px solid white;
       cursor: pointer;
     }
+    #dodge-btn:hover {
+      background: #555;
+    }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
   <div id="ui">
     <div class="hp-bar"><div id="player-hp" class="hp-bar-inner"></div></div>
-    分數: <span id="score">0</span><br/>
-    <button id="autoDodgeBtn">啟用自動閃避</button>
+    分數: <span id="score">0</span><br>
+    <button id="dodge-btn">啟動自動閃避</button>
   </div>
   <script>
     const canvas = document.getElementById("game");
@@ -95,33 +98,40 @@
       }
       update() {
         if (this.invincible > 0) this.invincible--;
-
-        if (this.autoDodge) {
-          this.autoDodgeLogic();
-        }
-
         this.x += this.vx;
         this.y += this.vy;
         this.x = Math.max(0, Math.min(canvas.width - this.w, this.x));
         this.y = Math.max(0, Math.min(canvas.height - this.h, this.y));
+        if (this.autoDodge) this.dodgeIfNear();
       }
-
       draw() {
         const cx = this.x + this.w / 2;
         const cy = this.y + this.h / 2;
+
+        if (this.invincible > 0) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255,255,100,${this.invincible / 30})`;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+
         ctx.strokeStyle = "yellow";
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(cx, cy - 20, 8, 0, Math.PI * 2);
         ctx.stroke();
+
         ctx.beginPath();
         ctx.moveTo(cx, cy - 12);
         ctx.lineTo(cx, cy + 10);
         ctx.stroke();
+
         ctx.beginPath();
         ctx.moveTo(cx - 10, cy);
         ctx.lineTo(cx + 10, cy);
         ctx.stroke();
+
         ctx.beginPath();
         ctx.moveTo(cx, cy + 10);
         ctx.lineTo(cx - 8, cy + 25);
@@ -129,20 +139,14 @@
         ctx.lineTo(cx + 8, cy + 25);
         ctx.stroke();
       }
-
-      autoDodgeLogic() {
-        const dangerRadius = 100;
-        const safeMargin = 100;
-        let inDanger = enemies.some(e => !e.dead && Math.hypot(e.x - this.x, e.y - this.y) < dangerRadius);
-        if (inDanger) {
-          for (let i = 0; i < 100; i++) {
-            let newX = Math.random() * (canvas.width - this.w);
-            let newY = Math.random() * (canvas.height - this.h);
-            let safe = enemies.every(e => Math.hypot(e.x - newX, e.y - newY) > safeMargin);
-            if (safe) {
-              this.x = newX;
-              this.y = newY;
-              this.invincible = 20;
+      dodgeIfNear() {
+        for (let e of enemies) {
+          if (!e.dead) {
+            const dx = e.x - this.x;
+            const dy = e.y - this.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 120 && this.invincible === 0) {
+              teleportToSafeZone();
               break;
             }
           }
@@ -233,6 +237,7 @@
     let enemies = [];
     let bullets = [];
     let effects = [];
+    let particles = [];
     let keys = {};
 
     function spawnEnemy() {
@@ -278,6 +283,31 @@
         eff.time--;
         if (eff.time <= 0) effects.splice(i, 1);
       }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        ctx.fillStyle = `rgba(255,255,200,${p.life / 30})`;
+        ctx.fillRect(p.x, p.y, 4, 4);
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function teleportToSafeZone() {
+      for (let i = 0; i < 20; i++) {
+        particles.push({
+          x: player.x + 20,
+          y: player.y + 20,
+          vx: (Math.random() - 0.5) * 10,
+          vy: (Math.random() - 0.5) * 10,
+          life: 30
+        });
+      }
+      player.x = Math.random() * (canvas.width - player.w);
+      player.y = Math.random() * (canvas.height - player.h);
+      player.invincible = 30;
     }
 
     function gameLoop() {
@@ -342,14 +372,13 @@
       if (keys["d"]) player.vx = player.speed;
     }
 
-    document.getElementById("autoDodgeBtn").addEventListener("click", () => {
+    document.getElementById("dodge-btn").onclick = () => {
       player.autoDodge = !player.autoDodge;
-      document.getElementById("autoDodgeBtn").innerText = player.autoDodge ? "關閉自動閃避" : "啟用自動閃避";
-    });
+      document.getElementById("dodge-btn").innerText = player.autoDodge ? "關閉自動閃避" : "啟動自動閃避";
+    };
 
     setInterval(controlPlayer, 20);
     setInterval(spawnEnemy, 1500);
-
     gameLoop();
   </script>
 </body>
