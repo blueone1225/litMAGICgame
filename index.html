@@ -36,13 +36,22 @@
       background: lime;
       width: 100%;
     }
+    #autoDodgeBtn {
+      margin-top: 10px;
+      padding: 5px 10px;
+      background: #333;
+      color: white;
+      border: 1px solid white;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
   <div id="ui">
     <div class="hp-bar"><div id="player-hp" class="hp-bar-inner"></div></div>
-    分數: <span id="score">0</span>
+    分數: <span id="score">0</span><br/>
+    <button id="autoDodgeBtn">啟用自動閃避</button>
   </div>
   <script>
     const canvas = document.getElementById("game");
@@ -82,44 +91,62 @@
         this.score = 0;
         this.autoFire = false;
         this.lastMelee = 0;
+        this.autoDodge = false;
       }
       update() {
         if (this.invincible > 0) this.invincible--;
+
+        if (this.autoDodge) {
+          this.autoDodgeLogic();
+        }
+
         this.x += this.vx;
         this.y += this.vy;
         this.x = Math.max(0, Math.min(canvas.width - this.w, this.x));
         this.y = Math.max(0, Math.min(canvas.height - this.h, this.y));
       }
+
       draw() {
         const cx = this.x + this.w / 2;
         const cy = this.y + this.h / 2;
         ctx.strokeStyle = "yellow";
         ctx.lineWidth = 2;
-
-        // 頭
         ctx.beginPath();
         ctx.arc(cx, cy - 20, 8, 0, Math.PI * 2);
         ctx.stroke();
-
-        // 身體
         ctx.beginPath();
         ctx.moveTo(cx, cy - 12);
         ctx.lineTo(cx, cy + 10);
         ctx.stroke();
-
-        // 手
         ctx.beginPath();
         ctx.moveTo(cx - 10, cy);
         ctx.lineTo(cx + 10, cy);
         ctx.stroke();
-
-        // 腳
         ctx.beginPath();
         ctx.moveTo(cx, cy + 10);
         ctx.lineTo(cx - 8, cy + 25);
         ctx.moveTo(cx, cy + 10);
         ctx.lineTo(cx + 8, cy + 25);
         ctx.stroke();
+      }
+
+      autoDodgeLogic() {
+        const dangerRadius = 100;
+        const safeMargin = 100;
+        let inDanger = enemies.some(e => !e.dead && Math.hypot(e.x - this.x, e.y - this.y) < dangerRadius);
+        if (inDanger) {
+          for (let i = 0; i < 100; i++) {
+            let newX = Math.random() * (canvas.width - this.w);
+            let newY = Math.random() * (canvas.height - this.h);
+            let safe = enemies.every(e => Math.hypot(e.x - newX, e.y - newY) > safeMargin);
+            if (safe) {
+              this.x = newX;
+              this.y = newY;
+              this.invincible = 20;
+              break;
+            }
+          }
+        }
       }
     }
 
@@ -128,7 +155,7 @@
         super(x, y, 40, 40, "red");
         this.hp = 50;
         this.maxHp = 50;
-        this.type = Math.floor(Math.random() * 4); // 0~3種
+        this.type = Math.floor(Math.random() * 4);
       }
       update() {
         const dx = player.x - this.x;
@@ -141,7 +168,7 @@
       }
       draw() {
         switch (this.type) {
-          case 0: // 眼睛怪
+          case 0:
             ctx.fillStyle = "red";
             ctx.beginPath();
             ctx.arc(this.x + 20, this.y + 20, 20, 0, Math.PI * 2);
@@ -155,14 +182,14 @@
             ctx.arc(this.x + 20, this.y + 20, 5, 0, Math.PI * 2);
             ctx.fill();
             break;
-          case 1: // 黏液怪
+          case 1:
             ctx.fillStyle = "green";
             ctx.beginPath();
             ctx.moveTo(this.x, this.y + 40);
             ctx.quadraticCurveTo(this.x + 20, this.y, this.x + 40, this.y + 40);
             ctx.fill();
             break;
-          case 2: // 齒輪怪
+          case 2:
             ctx.fillStyle = "gray";
             for (let i = 0; i < 8; i++) {
               let angle = (i * Math.PI) / 4;
@@ -176,7 +203,7 @@
             ctx.arc(this.x + 20, this.y + 20, 10, 0, Math.PI * 2);
             ctx.fill();
             break;
-          case 3: // 機械怪
+          case 3:
             ctx.fillStyle = "#555";
             ctx.fillRect(this.x, this.y, 40, 40);
             ctx.fillStyle = "blue";
@@ -314,6 +341,11 @@
       if (keys["a"]) player.vx = -player.speed;
       if (keys["d"]) player.vx = player.speed;
     }
+
+    document.getElementById("autoDodgeBtn").addEventListener("click", () => {
+      player.autoDodge = !player.autoDodge;
+      document.getElementById("autoDodgeBtn").innerText = player.autoDodge ? "關閉自動閃避" : "啟用自動閃避";
+    });
 
     setInterval(controlPlayer, 20);
     setInterval(spawnEnemy, 1500);
