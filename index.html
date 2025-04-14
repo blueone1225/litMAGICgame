@@ -1,199 +1,216 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>動作遊戲</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>動作遊戲 - HTML</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background: linear-gradient(#111, #222);
-      color: white;
+      background: #111;
+      color: #fff;
       font-family: sans-serif;
     }
-
-    #gameContainer {
-      position: relative;
-      width: 800px;
-      height: 400px;
-      margin: 20px auto;
-      background-color: #000;
-      border: 2px solid #555;
-      overflow: hidden;
-    }
-
-    #player {
-      position: absolute;
-      bottom: 0;
-      left: 100px;
-      width: 40px;
-      height: 40px;
-      background-color: yellow;
-      transition: left 0.05s, bottom 0.05s;
-      animation: glowFlash 1.2s infinite alternate;
-    }
-
-    @keyframes glowFlash {
-      0% { box-shadow: 0 0 5px #ffff33; }
-      100% { box-shadow: 0 0 20px 5px #ffff99; }
-    }
-
-    .invincible {
-      animation: blink 0.2s steps(2, start) infinite;
-    }
-
-    @keyframes blink {
-      to {
-        visibility: hidden;
-      }
-    }
-
-    .enemy {
-      position: absolute;
-      bottom: 0;
-      width: 40px;
-      height: 40px;
-      background-color: red;
-      animation: moveEnemy 6s linear infinite;
-    }
-
-    @keyframes moveEnemy {
-      0% { left: 800px; }
-      100% { left: -50px; }
-    }
-
-    #hpBarContainer {
-      width: 300px;
-      height: 20px;
-      border: 2px solid #fff;
+    canvas {
+      display: block;
       background: #222;
-      margin: 10px auto;
     }
-
-    #hpBar {
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      z-index: 10;
+      font-size: 18px;
+    }
+    .hp-bar {
+      width: 200px;
+      height: 20px;
+      background: red;
+      border: 2px solid #fff;
+      margin-bottom: 10px;
+    }
+    .hp-bar-inner {
       height: 100%;
-      background: linear-gradient(to right, limegreen, green);
+      background: lime;
       width: 100%;
-      transition: width 0.3s ease;
-    }
-
-    #info {
-      text-align: center;
-      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <div id="hpBarContainer">
-    <div id="hpBar"></div>
+  <canvas id="game"></canvas>
+  <div id="ui">
+    <div class="hp-bar"><div id="player-hp" class="hp-bar-inner"></div></div>
+    分數: <span id="score">0</span>
   </div>
-
-  <div id="gameContainer">
-    <div id="player"></div>
-
-    <!-- 你可以複製這整個 .enemy 來加更多怪 -->
-    <div class="enemy" style="top: 200px;"></div>
-    <div class="enemy" style="top: 300px; animation-delay: 3s;"></div>
-  </div>
-
-  <div id="info">使用 A/D 或 ←/→ 移動，Space/W/↑ 跳，Shift+方向 Dash 閃避</div>
-
   <script>
-    const player = document.getElementById("player");
-    const enemies = document.querySelectorAll(".enemy");
-    const hpBar = document.getElementById("hpBar");
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    let playerX = 100;
-    let playerY = 0;
-    let velocityY = 0;
-    let jumping = false;
-    let keys = {};
-    let gravity = 1;
-    let dashCooldown = false;
-    let invincible = false;
-    let maxHP = 100;
-    let currentHP = 100;
-
-    function movePlayer() {
-      if ((keys["a"] || keys["ArrowLeft"]) && !keys["Shift"]) {
-        playerX -= 5;
+    class Entity {
+      constructor(x, y, w, h, color) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.color = color;
+        this.vx = 0;
+        this.vy = 0;
+        this.hp = 100;
+        this.maxHp = 100;
       }
-      if ((keys["d"] || keys["ArrowRight"]) && !keys["Shift"]) {
-        playerX += 5;
+      draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.w, this.h);
       }
-
-      if ((keys["Shift"] && keys["a"]) || (keys["Shift"] && keys["ArrowLeft"])) {
-        if (!dashCooldown) {
-          playerX -= 100;
-          dashCooldown = true;
-          setTimeout(() => dashCooldown = false, 800);
-        }
-      }
-      if ((keys["Shift"] && keys["d"]) || (keys["Shift"] && keys["ArrowRight"])) {
-        if (!dashCooldown) {
-          playerX += 100;
-          dashCooldown = true;
-          setTimeout(() => dashCooldown = false, 800);
-        }
-      }
-
-      if ((keys[" "] || keys["w"] || keys["ArrowUp"]) && !jumping) {
-        velocityY = 15;
-        jumping = true;
-      }
-
-      velocityY -= gravity;
-      playerY += velocityY;
-
-      if (playerY <= 0) {
-        playerY = 0;
-        jumping = false;
-      }
-
-      playerX = Math.max(0, Math.min(760, playerX));
-      player.style.left = playerX + "px";
-      player.style.bottom = playerY + "px";
-
-      checkCollision();
-      requestAnimationFrame(movePlayer);
-    }
-
-    function checkCollision() {
-      const playerRect = player.getBoundingClientRect();
-
-      enemies.forEach(enemy => {
-        const enemyRect = enemy.getBoundingClientRect();
-
-        const overlap = !(
-          playerRect.right < enemyRect.left ||
-          playerRect.left > enemyRect.right ||
-          playerRect.bottom < enemyRect.top ||
-          playerRect.top > enemyRect.bottom
+      intersect(other) {
+        return (
+          this.x < other.x + other.w &&
+          this.x + this.w > other.x &&
+          this.y < other.y + other.h &&
+          this.y + this.h > other.y
         );
+      }
+    }
 
-        if (overlap && !invincible) {
-          takeDamage(20);
+    class Player extends Entity {
+      constructor() {
+        super(100, 100, 40, 40, "yellow");
+        this.speed = 5;
+        this.dashing = false;
+        this.invincible = 0;
+        this.score = 0;
+      }
+      update() {
+        if (this.invincible > 0) this.invincible--;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.x = Math.max(0, Math.min(canvas.width - this.w, this.x));
+        this.y = Math.max(0, Math.min(canvas.height - this.h, this.y));
+      }
+    }
+
+    class Enemy extends Entity {
+      constructor(x, y) {
+        super(x, y, 40, 40, "red");
+        this.hp = 50;
+        this.maxHp = 50;
+      }
+      update() {
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const len = Math.hypot(dx, dy);
+        this.vx = (dx / len) * 2;
+        this.vy = (dy / len) * 2;
+        this.x += this.vx;
+        this.y += this.vy;
+      }
+    }
+
+    class Bullet extends Entity {
+      constructor(x, y, vx, vy) {
+        super(x, y, 10, 10, "cyan");
+        this.vx = vx;
+        this.vy = vy;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+      }
+    }
+
+    let player = new Player();
+    let enemies = [];
+    let bullets = [];
+    let keys = {};
+
+    function spawnEnemy() {
+      let x = Math.random() * canvas.width;
+      let y = Math.random() * canvas.height;
+      enemies.push(new Enemy(x, y));
+    }
+
+    function drawHPBar() {
+      const hpPercent = player.hp / player.maxHp * 100;
+      document.getElementById("player-hp").style.width = `${hpPercent}%`;
+    }
+
+    function drawScore() {
+      document.getElementById("score").innerText = player.score;
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // update
+      player.update();
+      enemies.forEach(e => e.update());
+      bullets.forEach(b => b.update());
+
+      // collision
+      for (let e of enemies) {
+        if (player.intersect(e) && player.invincible === 0) {
+          player.hp -= 10;
+          player.invincible = 30;
+          if (player.hp <= 0) alert("你死了");
         }
-      });
+        for (let b of bullets) {
+          if (b.intersect(e)) {
+            e.hp -= 25;
+            b.x = -9999;
+            if (e.hp <= 0) {
+              e.x = -9999;
+              player.score += 10;
+              // 特效
+              ctx.beginPath();
+              ctx.arc(e.x, e.y, 30, 0, 2 * Math.PI);
+              ctx.strokeStyle = "#fff";
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      // draw
+      player.draw();
+      enemies.forEach(e => e.draw());
+      bullets.forEach(b => b.draw());
+      drawHPBar();
+      drawScore();
+
+      requestAnimationFrame(gameLoop);
     }
 
-    function takeDamage(amount) {
-      currentHP -= amount;
-      if (currentHP < 0) currentHP = 0;
-      hpBar.style.width = (currentHP / maxHP * 100) + "%";
+    window.addEventListener("keydown", e => {
+      keys[e.key] = true;
+      if (e.key === " ") {
+        bullets.push(new Bullet(player.x + 15, player.y, 0, -10));
+      }
+      if (e.key === "Shift") {
+        if (!player.dashing) {
+          player.x += player.vx * 20;
+          player.dashing = true;
+          setTimeout(() => (player.dashing = false), 200);
+        }
+      }
+    });
+    window.addEventListener("keyup", e => (keys[e.key] = false));
 
-      invincible = true;
-      player.classList.add("invincible");
-      setTimeout(() => {
-        player.classList.remove("invincible");
-        invincible = false;
-      }, 1000);
+    function controlPlayer() {
+      player.vx = player.vy = 0;
+      if (keys["w"]) player.vy = -player.speed;
+      if (keys["s"]) player.vy = player.speed;
+      if (keys["a"]) player.vx = -player.speed;
+      if (keys["d"]) player.vx = player.speed;
     }
 
-    document.addEventListener("keydown", (e) => keys[e.key] = true);
-    document.addEventListener("keyup", (e) => keys[e.key] = false);
+    setInterval(controlPlayer, 20);
+    setInterval(spawnEnemy, 1500);
 
-    movePlayer();
+    gameLoop();
   </script>
 </body>
 </html>
