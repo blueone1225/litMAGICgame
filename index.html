@@ -67,23 +67,6 @@
         width: 22%;
       }
     }
-
-    .label {
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 5px;
-      background-color: #81c784;
-      color: white;
-    }
-
-    .shy-label {
-      background-color: #66bb6a;
-    }
-
-    .neutral-label {
-      background-color: #ffb74d;
-    }
-
   </style>
 </head>
 <body>
@@ -122,29 +105,26 @@
     }
   }
 
+  function distributeEvenly(list, groups) {
+    list.forEach((person, i) => {
+      groups[i % groups.length].push(person);
+    });
+  }
+
   function generateGroups() {
     // 打亂每個性格類別
     shuffle(care);
     shuffle(shy);
     shuffle(neutral);
 
-    // 設定分組數量
-    const groups = [
-      { care: 2, shy: 2, neutral: 5 }, // A 組
-      { care: 2, shy: 2, neutral: 4 }, // B 組
-      { care: 1, shy: 2, neutral: 5 }  // C 組
-    ];
+    // 指定要幾組
+    const groupCount = 3;
+    const groups = Array.from({ length: groupCount }, () => []);
 
-    // 生成分組
-    const groupDetails = groups.map((group, idx) => {
-      const careGroup = care.splice(0, group.care);
-      const shyGroup = shy.splice(0, group.shy);
-      const neutralGroup = neutral.splice(0, group.neutral);
-      return { 
-        groupName: `第 ${idx + 1} 組`, 
-        members: [...careGroup, ...shyGroup, ...neutralGroup]
-      };
-    });
+    // 平均分配每類性格進組別
+    distributeEvenly(care, groups);
+    distributeEvenly(shy, groups);
+    distributeEvenly(neutral, groups);
 
     // 顯示各性格名單
     document.getElementById("careList").innerText = care.join("、");
@@ -154,20 +134,10 @@
     // 顯示分組結果
     const output = document.getElementById("result");
     output.innerHTML = '';
-    groupDetails.forEach(group => {
+    groups.forEach((group, i) => {
       const div = document.createElement("div");
       div.className = "group";
-      let groupContent = `<strong>${group.groupName}：</strong>`;
-      group.members.forEach(member => {
-        if (care.includes(member)) {
-          groupContent += `<span class="label">可照顧別人</span> ${member} `;
-        } else if (shy.includes(member)) {
-          groupContent += `<span class="label shy-label">內向型</span> ${member} `;
-        } else if (neutral.includes(member)) {
-          groupContent += `<span class="label neutral-label">中間值</span> ${member} `;
-        }
-      });
-      div.innerHTML = groupContent;
+      div.innerHTML = `<strong>第 ${i + 1} 組：</strong> ${group.join("、")}`;
       output.appendChild(div);
     });
   }
