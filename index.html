@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>學生性格分組系統</title>
   <style>
     body { font-family: 微軟正黑體; background: #f0fdf4; color: #1b5e20; padding: 20px; }
@@ -47,7 +47,6 @@
       width: 100%;
       margin: 10px 0;
     }
-
     .student-item {
       display: inline-block;
       margin: 3px 5px;
@@ -55,7 +54,6 @@
       padding: 4px 8px;
       border-radius: 4px;
     }
-
     .delete-btn {
       background: transparent;
       color: red;
@@ -64,7 +62,6 @@
       cursor: pointer;
       margin-left: 5px;
     }
-
     @media (min-width: 600px) {
       .group div { width: 45%; }
     }
@@ -129,18 +126,34 @@
     shuffle(neutral);
 
     const groupCount = 3;
-    const groups = Array.from({ length: groupCount }, () => []);
+    const groups = Array.from({ length: groupCount }, () => ({
+      members: [],
+      care: 0,
+      shy: 0,
+      neutral: 0
+    }));
 
-    distributeEvenly(care, groups);
-    distributeEvenly(shy, groups);
-    distributeEvenly(neutral, groups);
+    distributeEvenly(care, groups.map(g => g.members));
+    distributeEvenly(shy, groups.map(g => g.members));
+    distributeEvenly(neutral, groups.map(g => g.members));
+
+    // 計算每組中各類型人數
+    groups.forEach(group => {
+      group.care = group.members.filter(name => care.includes(name)).length;
+      group.shy = group.members.filter(name => shy.includes(name)).length;
+      group.neutral = group.members.filter(name => neutral.includes(name)).length;
+    });
 
     const output = document.getElementById("result");
     output.innerHTML = '';
     groups.forEach((group, i) => {
       const div = document.createElement("div");
       div.className = "group";
-      div.innerHTML = `<strong>第 ${i + 1} 組：</strong> ${group.join("、")}`;
+      div.innerHTML = `
+        <strong>第 ${i + 1} 組：</strong><br>
+        成員：${group.members.join("、")}<br>
+        👥 組成規則：🧑‍🏫 ${group.care} 位，🐢 ${group.shy} 位，🤝 ${group.neutral} 位
+      `;
       output.appendChild(div);
     });
   }
@@ -186,7 +199,7 @@
     });
   }
 
-  // 初始畫面更新
+  // 初始化畫面
   updateList("care");
   updateList("shy");
   updateList("neutral");
