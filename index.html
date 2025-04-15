@@ -36,7 +36,7 @@
       background: lime;
       width: 100%;
     }
-    #dodge-btn {
+    button {
       margin-top: 10px;
       padding: 5px 10px;
       background: #333;
@@ -44,8 +44,12 @@
       border: 1px solid white;
       cursor: pointer;
     }
-    #dodge-btn:hover {
+    button:hover {
       background: #555;
+    }
+    @keyframes jump {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
     }
   </style>
 </head>
@@ -54,13 +58,41 @@
   <div id="ui">
     <div class="hp-bar"><div id="player-hp" class="hp-bar-inner"></div></div>
     分數: <span id="score">0</span><br>
-    <button id="dodge-btn">啟動自動閃避</button>
+    <button id="dodge-btn">啟動自動閃避</button><br>
+    <button id="upload-player">上傳主角圖片</button>
+    <input type="file" id="player-image-input" style="display:none">
+    <button id="upload-enemy">上傳敵人圖片</button>
+    <input type="file" id="enemy-image-input" style="display:none">
   </div>
   <script>
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+
+    let playerImage = null;
+    let enemyImage = null;
+
+    document.getElementById("upload-player").onclick = () => document.getElementById("player-image-input").click();
+    document.getElementById("upload-enemy").onclick = () => document.getElementById("enemy-image-input").click();
+
+    document.getElementById("player-image-input").onchange = e => {
+      const file = e.target.files[0];
+      if (file) {
+        const img = new Image();
+        img.onload = () => { playerImage = img; };
+        img.src = URL.createObjectURL(file);
+      }
+    };
+
+    document.getElementById("enemy-image-input").onchange = e => {
+      const file = e.target.files[0];
+      if (file) {
+        const img = new Image();
+        img.onload = () => { enemyImage = img; };
+        img.src = URL.createObjectURL(file);
+      }
+    };
 
     class Entity {
       constructor(x, y, w, h, color) {
@@ -105,39 +137,19 @@
         if (this.autoDodge) this.dodgeIfNear();
       }
       draw() {
-        const cx = this.x + this.w / 2;
-        const cy = this.y + this.h / 2;
+        const cx = this.x;
+        const cy = this.y;
 
-        if (this.invincible > 0) {
-          ctx.beginPath();
-          ctx.arc(cx, cy, 30, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(255,255,100,${this.invincible / 30})`;
-          ctx.lineWidth = 3;
-          ctx.stroke();
+        if (playerImage) {
+          ctx.drawImage(playerImage, this.x, this.y, this.w, this.h);
+        } else {
+          ctx.fillStyle = this.color;
+          ctx.fillRect(this.x, this.y, this.w, this.h);
         }
 
-        ctx.strokeStyle = "yellow";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy - 20, 8, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - 12);
-        ctx.lineTo(cx, cy + 10);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(cx - 10, cy);
-        ctx.lineTo(cx + 10, cy);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(cx, cy + 10);
-        ctx.lineTo(cx - 8, cy + 25);
-        ctx.moveTo(cx, cy + 10);
-        ctx.lineTo(cx + 8, cy + 25);
-        ctx.stroke();
+        ctx.save();
+        ctx.translate(cx + this.w / 2, cy + this.h / 2);
+        ctx.restore();
       }
       dodgeIfNear() {
         for (let e of enemies) {
@@ -171,48 +183,13 @@
         this.y += this.vy;
       }
       draw() {
-        switch (this.type) {
-          case 0:
-            ctx.fillStyle = "red";
-            ctx.beginPath();
-            ctx.arc(this.x + 20, this.y + 20, 20, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = "white";
-            ctx.beginPath();
-            ctx.arc(this.x + 20, this.y + 20, 10, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = "black";
-            ctx.beginPath();
-            ctx.arc(this.x + 20, this.y + 20, 5, 0, Math.PI * 2);
-            ctx.fill();
-            break;
-          case 1:
-            ctx.fillStyle = "green";
-            ctx.beginPath();
-            ctx.moveTo(this.x, this.y + 40);
-            ctx.quadraticCurveTo(this.x + 20, this.y, this.x + 40, this.y + 40);
-            ctx.fill();
-            break;
-          case 2:
-            ctx.fillStyle = "gray";
-            for (let i = 0; i < 8; i++) {
-              let angle = (i * Math.PI) / 4;
-              let x = this.x + 20 + Math.cos(angle) * 18;
-              let y = this.y + 20 + Math.sin(angle) * 18;
-              ctx.beginPath();
-              ctx.arc(x, y, 5, 0, Math.PI * 2);
-              ctx.fill();
-            }
-            ctx.beginPath();
-            ctx.arc(this.x + 20, this.y + 20, 10, 0, Math.PI * 2);
-            ctx.fill();
-            break;
-          case 3:
-            ctx.fillStyle = "#555";
-            ctx.fillRect(this.x, this.y, 40, 40);
-            ctx.fillStyle = "blue";
-            ctx.fillRect(this.x + 10, this.y + 10, 20, 20);
-            break;
+        if (enemyImage) {
+          ctx.drawImage(enemyImage, this.x, this.y, this.w, this.h);
+        } else {
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x + 20, this.y + 20, 20, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
     }
