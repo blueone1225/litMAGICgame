@@ -1,362 +1,174 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>動作遊戲 - 自動閃避特效版</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>終端機模擬器 - 自爆演示</title>
   <style>
     body {
+      background: linear-gradient(to bottom, #0f0f0f, #1a1a1a);
+      color: #00ff88;
+      font-family: 'Fira Code', 'Courier New', Courier, monospace;
       margin: 0;
-      overflow: hidden;
-      background: #111;
-      color: #fff;
-      font-family: sans-serif;
+      padding: 0;
+      overflow-x: hidden;
     }
-    canvas {
-      display: block;
-      background: #222;
+    #terminal {
+      padding: 24px;
+      white-space: pre-wrap;
+      min-height: 100vh;
+      box-sizing: border-box;
     }
-    #ui {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: white;
-      z-index: 10;
-      font-size: 18px;
+    #input {
+      display: inline;
+      outline: none;
     }
-    .hp-bar {
-      width: 200px;
-      height: 20px;
-      background: red;
-      border: 2px solid #fff;
-      margin-bottom: 10px;
+    .blink {
+      animation: blink 1s steps(2, start) infinite;
     }
-    .hp-bar-inner {
-      height: 100%;
-      background: lime;
-      width: 100%;
+    @keyframes blink {
+      to {
+        visibility: hidden;
+      }
     }
-    button {
-      margin-top: 10px;
-      padding: 5px 10px;
-      background: #333;
-      color: white;
-      border: 1px solid white;
-      cursor: pointer;
+    .destroying {
+      color: red;
+      animation: flicker 0.1s infinite;
     }
-    button:hover {
-      background: #555;
+    @keyframes flicker {
+      0%, 100% {opacity: 1;}
+      50% {opacity: 0;}
     }
-    @keyframes jump {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
+    .output {
+      color: #00ff88;
+    }
+    .error {
+      color: #ff6b6b;
+    }
+    .info {
+      color: #ffd166;
+    }
+    .command {
+      color: #29b6f6;
+    }
+    .header {
+      background-color: #222;
+      padding: 8px 16px;
+      font-weight: bold;
+      color: #ffffff;
+      border-bottom: 2px solid #00ff88;
     }
   </style>
 </head>
 <body>
-  <canvas id="game"></canvas>
-  <div id="ui">
-    <div class="hp-bar"><div id="player-hp" class="hp-bar-inner"></div></div>
-    分數: <span id="score">0</span><br>
-    <button id="dodge-btn">啟動自動閃避</button><br>
-    <button id="upload-player">上傳主角圖片</button>
-    <input type="file" id="player-image-input" style="display:none">
-    <button id="upload-enemy">上傳敵人圖片</button>
-    <input type="file" id="enemy-image-input" style="display:none">
+  <div class="header">模擬終端機 v2.0</div>
+  <div id="terminal">
+    <div><span class="command">$</span> <span id="input" contenteditable="true"></span><span class="blink">█</span></div>
   </div>
+
   <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    let input = document.getElementById('input');
+    const terminal = document.getElementById('terminal');
+    let history = [];
+    let historyIndex = -1;
 
-    let playerImage = null;
-    let enemyImage = null;
+    input.focus();
 
-    document.getElementById("upload-player").onclick = () => document.getElementById("player-image-input").click();
-    document.getElementById("upload-enemy").onclick = () => document.getElementById("enemy-image-input").click();
-
-    document.getElementById("player-image-input").onchange = e => {
-      const file = e.target.files[0];
-      if (file) {
-        const img = new Image();
-        img.onload = () => { playerImage = img; };
-        img.src = URL.createObjectURL(file);
-      }
+    const commands = {
+      'help': '可用指令: help, echo, clear, sudo rm -rf /, date, whoami',
+      'echo': (args) => args.join(' '),
+      'clear': () => {
+        terminal.innerHTML = '<div><span class="command">$</span> <span id="input" contenteditable="true"></span><span class="blink">█</span></div>';
+        bindInput();
+        return null;
+      },
+      'date': () => new Date().toString(),
+      'whoami': () => 'root',
+      'sudo rm -rf /': 'DESTROY'
     };
 
-    document.getElementById("enemy-image-input").onchange = e => {
-      const file = e.target.files[0];
-      if (file) {
-        const img = new Image();
-        img.onload = () => { enemyImage = img; };
-        img.src = URL.createObjectURL(file);
-      }
-    };
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const commandText = input.innerText.trim();
+        if (!commandText) return;
+        history.push(commandText);
+        historyIndex = history.length;
+        const output = document.createElement('div');
+        output.innerHTML = `<span class="command">$</span> ${commandText}`;
+        terminal.insertBefore(output, input.parentElement);
+        input.innerText = '';
 
-    class Entity {
-      constructor(x, y, w, h, color) {
-        this.x = x;
-        this.y = y;
-        this.w = w;
-        this.h = h;
-        this.color = color;
-        this.vx = 0;
-        this.vy = 0;
-        this.hp = 100;
-        this.maxHp = 100;
-        this.dead = false;
-      }
-      intersect(other) {
-        return (
-          this.x < other.x + other.w &&
-          this.x + this.w > other.x &&
-          this.y < other.y + other.h &&
-          this.y + this.h > other.y
-        );
-      }
-    }
-
-    class Player extends Entity {
-      constructor() {
-        super(100, 100, 40, 40, "yellow");
-        this.speed = 5;
-        this.dashing = false;
-        this.invincible = 0;
-        this.score = 0;
-        this.autoFire = false;
-        this.lastMelee = 0;
-        this.autoDodge = false;
-      }
-      update() {
-        if (this.invincible > 0) this.invincible--;
-        this.x += this.vx;
-        this.y += this.vy;
-        this.x = Math.max(0, Math.min(canvas.width - this.w, this.x));
-        this.y = Math.max(0, Math.min(canvas.height - this.h, this.y));
-        if (this.autoDodge) this.dodgeIfNear();
-      }
-      draw() {
-        const cx = this.x;
-        const cy = this.y;
-
-        if (playerImage) {
-          ctx.drawImage(playerImage, this.x, this.y, this.w, this.h);
+        executeCommand(commandText);
+      } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+          historyIndex--;
+          input.innerText = history[historyIndex];
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (historyIndex < history.length - 1) {
+          historyIndex++;
+          input.innerText = history[historyIndex];
         } else {
-          ctx.fillStyle = this.color;
-          ctx.fillRect(this.x, this.y, this.w, this.h);
-        }
-
-        ctx.save();
-        ctx.translate(cx + this.w / 2, cy + this.h / 2);
-        ctx.restore();
-      }
-      dodgeIfNear() {
-        for (let e of enemies) {
-          if (!e.dead) {
-            const dx = e.x - this.x;
-            const dy = e.y - this.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist < 120 && this.invincible === 0) {
-              teleportToSafeZone();
-              break;
-            }
-          }
+          input.innerText = '';
         }
       }
-    }
-
-    class Enemy extends Entity {
-      constructor(x, y) {
-        super(x, y, 40, 40, "red");
-        this.hp = 50;
-        this.maxHp = 50;
-        this.type = Math.floor(Math.random() * 4);
-      }
-      update() {
-        const dx = player.x - this.x;
-        const dy = player.y - this.y;
-        const len = Math.hypot(dx, dy);
-        this.vx = (dx / len) * 2;
-        this.vy = (dy / len) * 2;
-        this.x += this.vx;
-        this.y += this.vy;
-      }
-      draw() {
-        if (enemyImage) {
-          ctx.drawImage(enemyImage, this.x, this.y, this.w, this.h);
-        } else {
-          ctx.fillStyle = this.color;
-          ctx.beginPath();
-          ctx.arc(this.x + 20, this.y + 20, 20, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-
-    class Bullet extends Entity {
-      constructor(x, y, vx, vy) {
-        super(x, y, 10, 10, "cyan");
-        this.vx = vx;
-        this.vy = vy;
-      }
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-      }
-      draw() {
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.w, this.h);
-      }
-    }
-
-    let player = new Player();
-    let enemies = [];
-    let bullets = [];
-    let effects = [];
-    let particles = [];
-    let keys = {};
-
-    function spawnEnemy() {
-      let x = Math.random() * canvas.width;
-      let y = Math.random() * canvas.height;
-      enemies.push(new Enemy(x, y));
-    }
-
-    function drawHPBar() {
-      const hpPercent = player.hp / player.maxHp * 100;
-      document.getElementById("player-hp").style.width = `${hpPercent}%`;
-    }
-
-    function drawScore() {
-      document.getElementById("score").innerText = player.score;
-    }
-
-    function meleeAttack() {
-      if (Date.now() - player.lastMelee < 500) return;
-      player.lastMelee = Date.now();
-      let melee = new Entity(player.x - 10, player.y - 10, player.w + 20, player.h + 20, "rgba(255,255,0,0.3)");
-      enemies.forEach(e => {
-        if (!e.dead && melee.intersect(e)) {
-          e.hp -= 40;
-          if (e.hp <= 0) killEnemy(e);
-        }
-      });
-    }
-
-    function killEnemy(enemy) {
-      enemy.dead = true;
-      player.score += 10;
-      effects.push({x: enemy.x, y: enemy.y, time: 20});
-    }
-
-    function drawEffects() {
-      for (let i = effects.length - 1; i >= 0; i--) {
-        const eff = effects[i];
-        ctx.beginPath();
-        ctx.arc(eff.x + 20, eff.y + 20, 30 - eff.time, 0, 2 * Math.PI);
-        ctx.fillStyle = `rgba(255,255,0,${eff.time / 20})`;
-        ctx.fill();
-        eff.time--;
-        if (eff.time <= 0) effects.splice(i, 1);
-      }
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i];
-        ctx.fillStyle = `rgba(255,255,200,${p.life / 30})`;
-        ctx.fillRect(p.x, p.y, 4, 4);
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life--;
-        if (p.life <= 0) particles.splice(i, 1);
-      }
-    }
-
-    function teleportToSafeZone() {
-      for (let i = 0; i < 20; i++) {
-        particles.push({
-          x: player.x + 20,
-          y: player.y + 20,
-          vx: (Math.random() - 0.5) * 10,
-          vy: (Math.random() - 0.5) * 10,
-          life: 30
-        });
-      }
-      player.x = Math.random() * (canvas.width - player.w);
-      player.y = Math.random() * (canvas.height - player.h);
-      player.invincible = 30;
-    }
-
-    function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      player.update();
-      enemies.forEach(e => e.update());
-      bullets.forEach(b => b.update());
-
-      if (player.autoFire && Date.now() % 5 === 0) {
-        bullets.push(new Bullet(player.x + 15, player.y, 0, -10));
-      }
-
-      for (let e of enemies) {
-        if (!e.dead && player.intersect(e) && player.invincible === 0) {
-          player.hp -= 10;
-          player.invincible = 30;
-          if (player.hp <= 0) alert("你死了");
-        }
-        for (let b of bullets) {
-          if (!e.dead && b.intersect(e)) {
-            e.hp -= 25;
-            b.x = -9999;
-            if (e.hp <= 0) killEnemy(e);
-          }
-        }
-      }
-
-      player.draw();
-      enemies.forEach(e => { if (!e.dead) e.draw(); });
-      bullets.forEach(b => b.draw());
-      drawEffects();
-      drawHPBar();
-      drawScore();
-
-      requestAnimationFrame(gameLoop);
-    }
-
-    window.addEventListener("keydown", e => {
-      keys[e.key] = true;
-      if (e.key === " ") bullets.push(new Bullet(player.x + 15, player.y, 0, -10));
-      if (e.key === "Shift") {
-        if (!player.dashing) {
-          player.x += player.vx * 20;
-          player.dashing = true;
-          setTimeout(() => (player.dashing = false), 200);
-        }
-      }
-      if (e.key === "y") player.autoFire = true;
-      if (e.key === "z") meleeAttack();
-    });
-    window.addEventListener("keyup", e => {
-      keys[e.key] = false;
-      if (e.key === "y") player.autoFire = false;
     });
 
-    function controlPlayer() {
-      player.vx = player.vy = 0;
-      if (keys["w"]) player.vy = -player.speed;
-      if (keys["s"]) player.vy = player.speed;
-      if (keys["a"]) player.vx = -player.speed;
-      if (keys["d"]) player.vx = player.speed;
+    function bindInput() {
+      input = document.getElementById('input');
+      input.focus();
     }
 
-    document.getElementById("dodge-btn").onclick = () => {
-      player.autoDodge = !player.autoDodge;
-      document.getElementById("dodge-btn").innerText = player.autoDodge ? "關閉自動閃避" : "啟動自動閃避";
-    };
+    function executeCommand(text) {
+      const [cmd, ...args] = text.split(' ');
+      const full = text.toLowerCase();
 
-    setInterval(controlPlayer, 20);
-    setInterval(spawnEnemy, 1500);
-    gameLoop();
+      if (commands[full] === 'DESTROY') {
+        simulateDestruction();
+      } else if (typeof commands[cmd] === 'function') {
+        const result = commands[cmd](args);
+        if (result !== null) appendOutput(result, 'output');
+      } else if (typeof commands[cmd] === 'string') {
+        appendOutput(commands[cmd], 'output');
+      } else {
+        appendOutput(`command not found: ${cmd}`, 'error');
+      }
+    }
+
+    function appendOutput(text, className = 'output') {
+      const div = document.createElement('div');
+      div.className = className;
+      div.textContent = text;
+      terminal.insertBefore(div, input.parentElement);
+    }
+
+    function simulateDestruction() {
+      const messages = [
+        '授權通過...',
+        '正在刪除 /boot',
+        '正在刪除 /etc',
+        '正在刪除 /home',
+        '正在刪除 /usr/bin',
+        '正在刪除 /var/log',
+        '系統核心崩潰中...',
+        '系統即將終止...'
+      ];
+
+      let i = 0;
+      input.parentElement.style.display = 'none';
+
+      const interval = setInterval(() => {
+        if (i >= messages.length) {
+          clearInterval(interval);
+          document.body.classList.add('destroying');
+          terminal.innerHTML = '<div style="color:red">[系統已摧毀]</div>';
+        } else {
+          appendOutput(messages[i], 'info');
+          i++;
+        }
+      }, 500);
+    }
   </script>
 </body>
 </html>
