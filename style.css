@@ -19,7 +19,7 @@ h1, h2, h3 {
 }
 
 .hero {
-  background: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQziVsQqPPOBivSQ7QTIxPFl-Ks57t8UB_kxw&s') no-repeat center center/cover;
+  background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1950&q=80') no-repeat center center/cover;
   padding: 8rem 0;
   text-align: center;
   color: white;
@@ -116,5 +116,6 @@ footer {
   transform: scale(1.05);
   box-shadow: 0 0 20px #00aeef88;
 }
+
 
 
