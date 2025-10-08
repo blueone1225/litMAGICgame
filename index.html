@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>義警 - VIGILANTE</title>
+
+  <!-- 字體 -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Roboto&display=swap" rel="stylesheet">
+
+  <style>
+    /* ---------- 全站基本樣式 ---------- */
+    :root{
+      --bg:#000;
+      --panel:#111;
+      --accent:#00aeef;
+      --danger:#ff0033;
+      --highlight:#ffcc00;
+      --muted:#888;
+      --terminal-green:#00ff88;
+    }
+
+    *{box-sizing: border-box}
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--bg);
+      color: #fff;
+      -webkit-font-smoothing:antialiased;
+      scroll-behavior: smooth;
+    }
+
+    h1,h2,h3 { font-family:'Orbitron', sans-serif; color:var(--accent); margin:0 0 1rem 0; }
+    p{line-height:1.6}
+
+    .container {
+      width: 90%;
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 0;
+    }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://storage.inewsdb.com/d30b6d4815c788344f50e56a3be5aa22.jpg') no-repeat center center/cover;
+      padding: 8rem 0;
+      text-align: center;
+      color: white;
+    }
+    .hero h1 { font-size: 3rem; margin-bottom: 0.5rem; letter-spacing:1px; }
+    .tagline { font-size: 1.2rem; color: var(--danger); font-style: italic; }
+
+    /* ---------- Navbar ---------- */
+    .navbar {
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      transition: all 0.3s ease-in-out;
+      backdrop-filter: blur(6px);
+    }
+    .navbar.scrolled {
+      background-color: #111;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+    }
+    .navbar .container { display:flex; align-items:center; gap:1rem; }
+    .navbar a { color:#fff; text-decoration:none; margin-right:1rem; transition: color .25s; font-weight:600;}
+    .navbar a:hover { color: var(--highlight); }
+
+    /* ---------- Sections & Grid ---------- */
+    .section {
+      background-color: var(--panel);
+      padding: 4rem 0;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s ease;
+    }
+    .section.dark { background-color: #000; }
+    .section.show { opacity:1; transform: translateY(0); }
+
+    .grid { display:flex; flex-wrap:wrap; gap:2rem; justify-content: space-between; }
+    .card {
+      background-color: #1a1a1a;
+      border-left: 5px solid var(--accent);
+      padding: 2rem;
+      flex: 1 1 45%;
+      box-shadow: 0 0 10px #000;
+      transition: box-shadow 0.3s, transform 0.2s;
+      border-radius:6px;
+    }
+    .card.glow:hover {
+      box-shadow: 0 0 20px var(--accent), 0 0 40px rgba(0,174,239,0.2);
+      transform: translateY(-6px);
+    }
+
+    /* ---------- Buttons & Footer ---------- */
+    button.primary {
+      background: var(--accent);
+      color: #000;
+      padding: 10px 18px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:700;
+      transition: box-shadow .2s, transform .12s;
+    }
+    button.primary:hover { box-shadow: 0 6px 18px rgba(0,174,239,0.18); transform: translateY(-2px); }
+    footer { text-align:center; background: #111; padding:2rem 0; color:var(--muted); font-size:0.9rem; }
+
+    /* ---------- 圖片懸浮放大 ---------- */
+    .zoom-img { transition: transform 0.4s ease, box-shadow 0.3s; cursor:pointer; border-radius:8px; display:block; max-width:100%;}
+    .zoom-img:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(0,174,239,0.5); }
+
+    /* ---------- 終端機 Modal 樣式 ---------- */
+    #terminal-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: radial-gradient(ellipse at center, rgba(10,10,10,0.98) 0%, rgba(0,0,0,0.99) 100%);
+      color: var(--terminal-green);
+      font-family: 'Fira Code', 'Courier New', monospace;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #terminal-wrapper {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: linear-gradient(#000,#0b0b0b);
+      border: 1px solid rgba(0,255,136,0.06);
+      border-radius: 6px;
+      overflow: hidden;
+      min-height: 70vh;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+
+    #terminal-header {
+      background-color: #111;
+      padding: 10px 16px;
+      color: #fff;
+      border-bottom: 2px solid var(--terminal-green);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    #terminal-header .left { font-weight:700; }
+    #terminal-header .controls { display:flex; gap:10px; align-items:center; }
+    .terminal-btn {
+      background:none;border:none;color:var(--terminal-green); cursor:pointer; font-weight:700;
+    }
+
+    #terminal {
+      padding: 20px;
+      white-space: pre-wrap;
+      min-height: 60vh;
+      box-sizing: border-box;
+      color: var(--terminal-green);
+      font-size: 15px;
+      line-height: 1.55;
+      overflow-y: auto;
+    }
+
+    #terminal .command { color: #29b6f6; }
+    .output { color: var(--terminal-green); }
+    .error { color:#ff6b6b; }
+    .info { color:#ffd166; }
+
+    #input { display:inline; outline:none; color:var(--terminal-green); }
+    .blink { animation: blink 1s steps(2, start) infinite; }
+    @keyframes blink { to { visibility: hidden; } }
+
+    .destroying { animation: flicker 0.08s infinite; background: radial-gradient(circle at center, rgba(255,0,0,0.06), rgba(0,0,0,0)); }
+    @keyframes flicker {
+      0%,100%{opacity:1}
+      50%{opacity:.3}
+    }
+
+    /* 響應式 */
+    @media (max-width:700px){
+      .grid{flex-direction:column}
+      .card{flex:1 1 100%}
+      .hero{padding:5rem 0}
+      #terminal-wrapper{margin: 20px; min-height: 60vh;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="container">
+      <h1>義警 VIGILANTE</h1>
+      <p class="tagline">正義，是夜的囚徒。</p>
+    </div>
+  </header>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#">首頁</a>
+      <a href="#bio">角色介紹</a>
+      <a href="#skills">技能裝備</a>
+      <a href="#contact">聯絡</a>
+    </div>
+  </nav>
+
+  <!-- 角色介紹 -->
+  <section id="bio" class="section dark fade-in">
+    <div class="container">
+      <h2>角色介紹</h2>
+      <p>在城市陷入混亂的陰影中，一位無名義警挺身而出。他不為榮耀，只為正義。身份成謎，行動冷酷，是罪犯的惡夢。</p>
+    </div>
+  </section>
+
+  <!-- 技能與裝備 -->
+  <section id="skills" class="section fade-in">
+    <div class="container grid">
+      <div class="card glow">
+        <h3>戰術裝備</h3>
+        <ul>
+          <li>高性能作戰服</li>
+          <li>衝鋒槍 / 煙霧彈</li>
+          <li>隱形熱感偵測器</li>
+        </ul>
+      </div>
+      <div class="card glow">
+        <h3>能力專長</h3>
+        <ul>
+          <li>潛行與偵查</li>
+          <li>徒手格鬥術</li>
+          <li>都市戰鬥策略</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 聯絡 + 啟動終端機按鈕 -->
+  <section id="contact" class="section dark fade-in">
+    <div class="container">
+      <h2>聯絡義警</h2>
+      <p>有線報？想加入他的行動？請透過地下網路留言。</p>
+
+      <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+        <button class="primary" onclick="openTerminal()">啟動終端機</button>
+        <span style="color:var(--muted);font-size:.95rem;">（模擬終端機 — 可輸入 <code>help</code> 或 <code>自毀</code>）</span>
+      </div>
+
+      <img src="https://pbs.twimg.com/media/G2Ns6LeWQAAVCLd.jpg" alt="義警裝備圖" class="zoom-img" style="max-width: 100%; border-radius: 8px; margin-top: 20px;" />
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>© 2025 義警計畫 | All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ---------- 終端機 Modal ---------- -->
+  <div id="terminal-modal" aria-hidden="true">
+    <div id="terminal-wrapper">
+      <div id="terminal-header">
+        <div class="left">模擬終端機 v2.0</div>
+        <div class="controls">
+          <button class="terminal-btn" onclick="minimizeTerminal()">—</button>
+          <button class="terminal-btn" onclick="closeTerminal()">✕</button>
+        </div>
+      </div>
+
+      <div id="terminal" role="region" aria-label="終端機輸出">
+        <div><span class="info">help 幫助 / 自毀</span></div>
+        <div><span class="command">$</span> <span id="input" contenteditable="true" spellcheck="false"></span><span class="blink">█</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /********* 導覽列滾動 & 區塊滑入動畫 *********/
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 80) navbar.classList.add('scrolled');
+      else navbar.classList.remove('scrolled');
+    });
+
+    const sections = document.querySelectorAll('.section');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('show');
+      });
+    }, { threshold: 0.12 });
+
+    sections.forEach(s => observer.observe(s));
+
+    /********* 終端機功能變數與行為 *********/
+    const modal = document.getElementById('terminal-modal');
+    const terminal = document.getElementById('terminal');
+    let input = document.getElementById('input');
+    let history = [];
+    let historyIndex = -1;
+    let previousBodyOverflow = '';
+
+    // 指令集合
+    const commands = {
+      'help': '可用指令: help, echo, clear, 自毀, date, whoami',
+      'echo': (args) => args.join(' '),
+      'clear': () => {
+        terminal.innerHTML = '<div><span class="info">help 幫助 / 自毀</span></div><div><span class="command">$</span> <span id="input" contenteditable="true" spellcheck="false"></span><span class="blink">█</span></div>';
+        bindInput();
+        return null;
+      },
+      'date': () => new Date().toString(),
+      'whoami': () => 'root',
+      '自毀': 'DESTROY'
+    };
+
+    // 打開終端機（顯示滿版 modal）
+    function openTerminal(){
+      modal.style.display = 'block';
+      modal.setAttribute('aria-hidden','false');
+      previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden'; // 阻止背景捲動
+      bindInput();
+      input.focus();
+      // 滾到最底（若想看到最新輸出）
+      setTimeout(()=> terminal.scrollTop = terminal.scrollHeight, 50);
+    }
+
+    function minimizeTerminal(){
+      // 簡單的「最小化」：隱藏 modal 但保留背景不恢復（可以自訂）
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden','true');
+      document.body.style.overflow = previousBodyOverflow || '';
+    }
+
+    function closeTerminal(){
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden','true');
+      document.body.style.overflow = previousBodyOverflow || '';
+      // 重置 (非必要)：
+      // terminal.innerHTML = '<div><span class="info">help 幫助 / 自毀</span></div><div><span class="command">$</span> <span id="input" contenteditable="true"></span><span class="blink">█</span></div>';
+      // bindInput();
+    }
+
+    function bindInput(){
+      input = document.getElementById('input');
+      if (!input) return;
+      input.focus();
+      // 將游標放到 contenteditable 的尾端
+      placeCaretAtEnd(input);
+    }
+
+    function placeCaretAtEnd(el) {
+      el.focus();
+      if (typeof window.getSelection != "undefined"
+          && typeof document.createRange != "undefined") {
+        var range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else if (typeof document.body.createTextRange != "undefined") {
+        var textRange = document.body.createTextRange();
+        textRange.moveToElementText(el);
+        textRange.collapse(false);
+        textRange.select();
+      }
+    }
+
+    // 鍵盤事件：只在 modal 開啟時回應
+    document.addEventListener('keydown', (e) => {
+      if (modal.style.display !== 'block') return;
+
+      // 如果按下 Esc 則關閉
+      if (e.key === 'Escape') { closeTerminal(); return; }
+
+      // 處理指令輸入、歷史
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!input) return;
+        const commandText = input.innerText.trim();
+        if (!commandText) { return; }
+        history.push(commandText);
+        historyIndex = history.length;
+        const outLine = document.createElement('div');
+        outLine.innerHTML = `<span class="command">$</span> ${escapeHtml(commandText)}`;
+        terminal.insertBefore(outLine, input.parentElement);
+        input.innerText = '';
+        executeCommand(commandText);
+        // 自動滾動到底
+        setTimeout(()=> terminal.scrollTop = terminal.scrollHeight, 60);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (history.length === 0) return;
+        if (historyIndex > 0) historyIndex--;
+        else historyIndex = 0;
+        input.innerText = history[historyIndex] || '';
+        placeCaretAtEnd(input);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (history.length === 0) return;
+        if (historyIndex < history.length - 1) historyIndex++;
+        else { historyIndex = history.length; input.innerText = ''; }
+        input.innerText = history[historyIndex] || '';
+        placeCaretAtEnd(input);
+      }
+    });
+
+    function executeCommand(text){
+      const parts = text.split(' ').filter(Boolean);
+      const cmd = (parts[0] || '').trim();
+      const args = parts.slice(1);
+      const full = text.trim().toLowerCase();
+
+      if (commands[full] === 'DESTROY') {
+        simulateDestruction();
+        return;
+      }
+
+      if (typeof commands[cmd] === 'function') {
+        const result = commands[cmd](args);
+        if (result !== null && result !== undefined) appendOutput(result, 'output');
+      } else if (typeof commands[cmd] === 'string') {
+        appendOutput(commands[cmd], 'output');
+      } else {
+        appendOutput(`command not found: ${cmd}`, 'error');
+      }
+      setTimeout(()=> terminal.scrollTop = terminal.scrollHeight, 50);
+    }
+
+    function appendOutput(text, className = 'output'){
+      const div = document.createElement('div');
+      div.className = className;
+      div.innerText = text;
+      // 在 input 行之前插入
+      const inputRow = document.querySelector('#input')?.parentElement;
+      terminal.insertBefore(div, inputRow || null);
+    }
+
+    // 模擬自毀順序（視覺效果）
+    function simulateDestruction(){
+      const messages = [
+        '授權通過...',
+        '正在停止非必要服務...',
+        '正在刪除 /boot',
+        '正在刪除 /etc',
+        '正在刪除 /home',
+        '正在刪除 /usr/bin',
+        '正在刪除 /var/log',
+        '系統核心崩潰中...',
+        '系統即將終止...'
+      ];
+
+      // 隱藏輸入列，避免繼續輸入
+      const inputRow = document.querySelector('#input')?.parentElement;
+      if (inputRow) inputRow.style.display = 'none';
+
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i >= messages.length) {
+          clearInterval(interval);
+          // 顯示摧毀完成訊息，並將整個 modal 及 body 加上 destroying 樣式（紅色閃爍）
+          terminal.innerHTML = '<div style="color:red;font-weight:700;">[系統已摧毀]</div>';
+          document.getElementById('terminal-wrapper').classList.add('destroying');
+          // 讓背景隨之閃爍（可視效果）
+          flashBodyRed();
+        } else {
+          appendOutput(messages[i], 'info');
+          i++;
+          terminal.scrollTop = terminal.scrollHeight;
+        }
+      }, 500);
+    }
+
+    // 閃爍整個視窗紅光（短暫）
+    function flashBodyRed(){
+      const origBg = document.body.style.background;
+      let count = 0;
+      const flash = setInterval(()=>{
+        document.body.style.background = (count % 2 === 0) ? 'radial-gradient(circle at center, rgba(255,0,0,0.06), rgba(0,0,0,0))' : '';
+        count++;
+        if (count > 14){ clearInterval(flash); document.body.style.background = origBg; }
+      }, 120);
+    }
+
+    // 安全：避免 XSS 輸入顯示
+    function escapeHtml(unsafe) {
+      return unsafe.replace(/[&<"'>]/g, function(m) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m];
+      });
+    }
+
+    // 初始 bind
+    bindInput();
+  </script>
+</body>
+</html>
